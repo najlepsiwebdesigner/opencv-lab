@@ -1,0 +1,61 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+
+using namespace std;
+using namespace cv;
+
+
+MainWindow::MainWindow(QWidget *parent)
+: QMainWindow(parent), ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
+    connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
+}
+
+
+
+MainWindow::~MainWindow()
+{
+}
+
+
+
+void MainWindow::saveImage(){
+    if (this->curImage.empty()) {
+        cout << "No image to save!" << endl;
+        return;
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),".",tr("Images (*.png *.jpg)"));
+
+    if (fileName.length() < 1) return;
+
+    cvtColor(this->curImage, this->curImage, CV_BGR2RGB);
+    imwrite(fileName.toStdString(), this->curImage);
+    cout << "File saved!" << endl;
+}
+
+
+void MainWindow::loadImage(){
+    // open file dialog
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
+    cout << "Loaded image name: "<< fileName.toStdString() << endl;
+
+    // open image as CV image
+    Mat src = imread(fileName.toStdString(),CV_LOAD_IMAGE_COLOR);
+
+    // display image
+    this->curImage = src;
+    redrawImage();
+}
+
+
+void MainWindow::redrawImage(){
+    Mat src = this->curImage;
+    // convert color models
+    cvtColor(src, src, CV_BGR2RGB);
+    QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
+    ui->imageDisplay->setPixmap(pix);
+}
+
