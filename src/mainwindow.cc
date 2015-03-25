@@ -8,6 +8,8 @@ using namespace cv;
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
+//    connect(cam, SIGNAL(processImage(Mat image)), this, SLOT(drawImage(Mat image)));
+
     ui->setupUi(this);
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
@@ -25,6 +27,7 @@ void MainWindow::showWebcam() {
     Webcam cam;
     cam.showRGB();
 }
+
 
 
 
@@ -57,6 +60,12 @@ void MainWindow::loadImage(){
     // display image
     this->curImage = src;
     redrawImage();
+}
+
+void MainWindow::drawImage(Mat src){
+    cvtColor(src, src, CV_BGR2RGB);
+    QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
+    ui->imageDisplay->setPixmap(pix);
 }
 
 

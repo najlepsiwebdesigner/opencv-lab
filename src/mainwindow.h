@@ -27,6 +27,7 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
+    void drawImage(Mat image);
 
 
 private:
