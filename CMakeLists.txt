@@ -14,10 +14,17 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt5Widgets REQUIRED)
 find_package( OpenCV REQUIRED )
 
+# libfreenect support
+include_directories("/usr/local/include/libfreenect")
+include_directories("/usr/local/include/libusb-1.0")
+
 set(SOURCE_FILES
     src/main.cc
     src/mainwindow.h
     src/mainwindow.cc
+    src/webcam.h
+    src/webcam.cpp
+    src/cv_helpers.h
 )
 
 if (WIN32)
@@ -45,7 +52,16 @@ add_executable(${PROJECT} MACOSX_BUNDLE
     ${UI_FILES}
     ${RESOURCE_FILES}
 )
+
+
+
+
 target_link_libraries(${PROJECT} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT} "freenect")
+
+
+
+
 
 set(MACOSX_BUNDLE_BUNDLE_NAME "idOCR")
 set(MACOSX_BUNDLE_BUNDLE_VERSION "1.0")

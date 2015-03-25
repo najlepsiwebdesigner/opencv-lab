@@ -11,12 +11,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
+    connect(ui->showWebcam, SIGNAL(clicked()), this, SLOT(showWebcam()));
 }
 
 
 
 MainWindow::~MainWindow()
 {
+}
+
+
+void MainWindow::showWebcam() {
+    Webcam cam;
+    cam.showRGB();
 }
 
 
@@ -40,6 +47,8 @@ void MainWindow::saveImage(){
 void MainWindow::loadImage(){
     // open file dialog
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
+    if (fileName.length() < 1) return;
+
     cout << "Loaded image name: "<< fileName.toStdString() << endl;
 
     // open image as CV image

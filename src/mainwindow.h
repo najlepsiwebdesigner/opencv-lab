@@ -7,9 +7,12 @@
 #include <iostream>
 
 #include "opencv2/opencv.hpp"
-#include "opencv2/highgui/highgui.hpp"
+//#include "opencv2/highgui/highgui.hpp"
+#include "webcam.h"
+
 
 using namespace cv;
+using namespace std;
 
 namespace Ui
 {
@@ -25,6 +28,7 @@ public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
 
+
 private:
     QScopedPointer<Ui::MainWindow> ui;
     void redrawImage();
@@ -32,7 +36,7 @@ private:
 private slots:
     void loadImage();
     void saveImage();
-
+    void showWebcam();
 };
 
 #endif
