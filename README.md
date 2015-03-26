@@ -1,0 +1,2 @@
+# idOCR
+Project for ZUNO
