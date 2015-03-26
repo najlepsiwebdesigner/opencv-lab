@@ -1,101 +1,8 @@
 #include "webcam.h"
+#include "myfreenectdevice.h"
 
 using namespace std;
 using namespace cv;
-
-class myMutex {
-    public:
-        myMutex() {
-            pthread_mutex_init( &m_mutex, NULL );
-        }
-        void lock() {
-            pthread_mutex_lock( &m_mutex );
-        }
-        void unlock() {
-            pthread_mutex_unlock( &m_mutex );
-        }
-    private:
-        pthread_mutex_t m_mutex;
-};
-
-
-class MyFreenectDevice : public Freenect::FreenectDevice {
-    public:
-        MyFreenectDevice(freenect_context *_ctx, int _index)
-            : Freenect::FreenectDevice(_ctx, _index), m_buffer_depth(FREENECT_DEPTH_11BIT),
-            m_buffer_rgb(FREENECT_VIDEO_RGB), m_gamma(2048), m_new_rgb_frame(false),
-            m_new_depth_frame(false), depthMat(Size(640,480),CV_16UC1),
-            rgbMat(Size(640,480), CV_8UC3, Scalar(0)),
-            ownMat(Size(640,480),CV_8UC3,Scalar(0)) {
-
-            for( unsigned int i = 0 ; i < 2048 ; i++) {
-                float v = i/2048.0;
-                v = std::pow(v, 3)* 6;
-                m_gamma[i] = v*6*256;
-            }
-        }
-
-        // Do not call directly even in child
-        void VideoCallback(void* _rgb, uint32_t timestamp) {
-            std::cout << "RGB callback" << std::endl;
-            m_rgb_mutex.lock();
-            uint8_t* rgb = static_cast<uint8_t*>(_rgb);
-            rgbMat.data = rgb;
-            m_new_rgb_frame = true;
-            m_rgb_mutex.unlock();
-        };
-
-        // Do not call directly even in child
-        void DepthCallback(void* _depth, uint32_t timestamp) {
-            std::cout << "Depth callback" << std::endl;
-            m_depth_mutex.lock();
-            uint16_t* depth = static_cast<uint16_t*>(_depth);
-            depthMat.data = (uchar*) depth;
-            m_new_depth_frame = true;
-            m_depth_mutex.unlock();
-        }
-
-        bool getVideo(Mat& output) {
-            m_rgb_mutex.lock();
-            if(m_new_rgb_frame) {
-                cv::cvtColor(rgbMat, output, CV_RGB2BGR);
-                m_new_rgb_frame = false;
-                m_rgb_mutex.unlock();
-                return true;
-            } else {
-                m_rgb_mutex.unlock();
-                return false;
-            }
-        }
-
-        bool getDepth(Mat& output) {
-                m_depth_mutex.lock();
-                if(m_new_depth_frame) {
-                    depthMat.copyTo(output);
-                    m_new_depth_frame = false;
-                    m_depth_mutex.unlock();
-                    return true;
-                } else {
-                    m_depth_mutex.unlock();
-                    return false;
-                }
-            }
-    private:
-        std::vector<uint8_t> m_buffer_depth;
-        std::vector<uint8_t> m_buffer_rgb;
-        std::vector<uint16_t> m_gamma;
-        Mat depthMat;
-        Mat rgbMat;
-        Mat ownMat;
-        myMutex m_rgb_mutex;
-        myMutex m_depth_mutex;
-        bool m_new_rgb_frame;
-        bool m_new_depth_frame;
-};
-
-
-
-
 
 Webcam::Webcam()
 {
@@ -108,13 +15,12 @@ Webcam::~Webcam()
 }
 
 
-
-
-
 void Webcam::threshold(Mat & src, Mat & dst){
     cv::cvtColor(src,dst , CV_BGR2GRAY);
-//    cv::threshold(dst,dst,0,255,CV_THRESH_OTSU);
-    cv::adaptiveThreshold(dst,dst,255,CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 7, 10);
+    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
+    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
+    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
+//    cv::adaptiveThreshold(dst,dst,255,ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 2);
 }
 
 
@@ -125,10 +31,10 @@ void Webcam::contours(Mat & src, Mat & dst) {
     vector<vector<Point> > contours;
     vector<Point> contours_approx;
     vector<Point> shape;
-
+//    cv::cvtColor(src,dst , CV_GRAY2RGB);
     cv::Canny(src, dst, 1, 1, 3);
-    dilate( dst, dst, Mat(Size(1,1), CV_8UC1));
 
+    dilate( dst, dst, Mat(Size(1,1), CV_8UC1));
 //    findContours( src, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
 
 //    cv::cvtColor(src, dst, CV_GRAY2RGB);
@@ -149,15 +55,71 @@ void Webcam::contours(Mat & src, Mat & dst) {
 
 
     std::vector<cv::Vec4i> lines;
-//    cv::HoughLinesP(dst, lines, 1, CV_PI/720, 75, 40, 10 );
-//    std::sort(lines.begin(), lines.end(), sortByLength);
-
-
-
+    cv::HoughLinesP(dst, lines, 1, CV_PI/360, 75, 40, 10 );
+    std::sort(lines.begin(), lines.end(), sortByLength);
+    filterLines(lines);
     cv::cvtColor(dst,dst , CV_GRAY2RGB);
+
+    if (lines.size() < 5){
+        // Expand and draw the lines
+        for (int i = 0; i < lines.size(); i++)
+        {
+            cv::Vec4i v = lines[i];
+            lines[i][0] = 0;
+            lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
+            lines[i][2] = dst.cols;
+            lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
+            cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0));
+        }
+
+
+        //compute corners
+        std::vector<cv::Point2f> corners;
+        for (int i = 0; i < lines.size(); i++)
+        {
+            for (int j = i+1; j < lines.size(); j++)
+            {
+                // atan2((y1-y2)/(x2-x1))*180/math.pi
+                cv::Vec4i v = lines[i];
+
+
+                Point intersection;
+
+                bool has_intersection = getIntersectionPoint(
+                    Point(lines[i][0],lines[i][1]),
+                    Point(lines[i][2], lines[i][3]),
+                    Point(lines[j][0],lines[j][1]),
+                    Point(lines[j][2], lines[j][3]),
+                    intersection);
+
+                if (has_intersection
+                    && intersection.x > 0
+                    && intersection.y > 0
+                    && intersection.x < dst.cols
+                    && intersection.y < dst.rows){
+                    corners.push_back(intersection);
+                }
+
+
+                cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
+            }
+        }
+
+
+
+
+        // compute and draw center of mass
+        cv::Point2f center(0,0);
+
+        for (int i = 0; i < corners.size(); i++)
+            center += corners[i];
+        center *= (1. / corners.size());
+
+        sortCorners(corners, center);
+        std::cout << "The corners were not sorted correctly!" << std::endl;
+        cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
+    }
 }
-
-
 
 
 
@@ -175,6 +137,8 @@ void Webcam::showRGB() {
     Mat thresholdedMat(Size(640,480),CV_8UC3,Scalar(0));
     Mat contoursMat(Size(640,480),CV_8UC3,Scalar(0));
 
+    vector<vector<Point> > squares;
+
     // The next two lines must be changed as Freenect::Freenect
     // isn't a template but the method createDevice:
     // Freenect::Freenect<MyFreenectDevice> freenect;
@@ -185,20 +149,31 @@ void Webcam::showRGB() {
     MyFreenectDevice& device = freenect.createDevice<MyFreenectDevice>(0);
 
     namedWindow("rgb",CV_WINDOW_AUTOSIZE);
+    namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
     namedWindow("processed",CV_WINDOW_AUTOSIZE);
+    namedWindow("squares",CV_WINDOW_AUTOSIZE);
     device.startVideo();
     while (!die) {
         device.getVideo(rgbMat);
 
-        cv::imshow("rgb", rgbMat);
+        findSquares(rgbMat, squares);
+
         threshold(rgbMat, thresholdedMat);
+        cv::imshow("thresholded", thresholdedMat);
         contours(thresholdedMat, contoursMat);
         cv::imshow("processed", contoursMat);
+
+        cv::imshow("rgb", rgbMat);
+
+        drawSquares(rgbMat, squares);
+
 
         char k = cvWaitKey(5);
         if( k == 27 ){
             cvDestroyWindow("rgb");
             cvDestroyWindow("processed");
+            cvDestroyWindow("thresholded");
+            cvDestroyWindow("squares");
             break;
         }
         if( k == 8 ) {

@@ -24,7 +24,10 @@ set(SOURCE_FILES
     src/mainwindow.cc
     src/webcam.h
     src/webcam.cpp
-    src/cv_helpers.h
+    src/helpers.h
+    src/helpers.cpp
+    src/myfreenectdevice.h
+    src/myfreenectdevice.cpp
 )
 
 if (WIN32)

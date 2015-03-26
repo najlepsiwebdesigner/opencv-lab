@@ -1,15 +1,9 @@
 #include <QApplication>
 #include "mainwindow.h"
 #include <iostream>
-//#include "opencv2/opencv.hpp"
-//#include "opencv2/highgui/highgui.hpp"
-#include "cv_helpers.h"
 
 using namespace std;
 using namespace cv;
-
-
-
 
 int main(int argc, char *argv[])
 {

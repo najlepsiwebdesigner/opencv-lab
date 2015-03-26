@@ -8,7 +8,6 @@ using namespace cv;
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
-//    connect(cam, SIGNAL(processImage(Mat image)), this, SLOT(drawImage(Mat image)));
 
     ui->setupUi(this);
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
@@ -56,9 +55,12 @@ void MainWindow::loadImage(){
 
     // open image as CV image
     Mat src = imread(fileName.toStdString(),CV_LOAD_IMAGE_COLOR);
+    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
+
+    fitImage(src, dst, 640, 480);
 
     // display image
-    this->curImage = src;
+    this->curImage = dst;
     redrawImage();
 }
 

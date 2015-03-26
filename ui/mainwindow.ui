@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>672</width>
-    <height>496</height>
+    <width>658</width>
+    <height>587</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>672</width>
-    <height>496</height>
+    <width>658</width>
+    <height>587</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>672</width>
-    <height>496</height>
+    <width>658</width>
+    <height>587</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -37,8 +37,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>651</width>
-      <height>441</height>
+      <width>640</width>
+      <height>480</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -60,8 +60,8 @@
    <widget class="QPushButton" name="loadPicture">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>460</y>
+      <x>10</x>
+      <y>520</y>
       <width>115</width>
       <height>32</height>
      </rect>
@@ -73,33 +73,52 @@
      </sizepolicy>
     </property>
     <property name="text">
-     <string>load Picture</string>
+     <string>load</string>
     </property>
    </widget>
    <widget class="QPushButton" name="savePicture">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>460</y>
+      <y>550</y>
       <width>115</width>
       <height>32</height>
      </rect>
     </property>
     <property name="text">
-     <string>save Picture</string>
+     <string>save</string>
     </property>
    </widget>
    <widget class="QPushButton" name="showWebcam">
     <property name="geometry">
      <rect>
-      <x>550</x>
-      <y>460</y>
+      <x>280</x>
+      <y>500</y>
       <width>115</width>
-      <height>32</height>
+      <height>81</height>
      </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
     </property>
     <property name="text">
      <string>Kinect</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>500</y>
+      <width>59</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Picture</string>
     </property>
    </widget>
   </widget>

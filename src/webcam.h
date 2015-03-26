@@ -3,12 +3,11 @@
 
 #include <vector>
 #include <cmath>
-#include <pthread.h>
-#include "libfreenect.hpp"
 #include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "mainwindow.h"
+#include "helpers.h"
 
 using namespace cv;
 

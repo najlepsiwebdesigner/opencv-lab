@@ -5,9 +5,9 @@
 #include <QScopedPointer>
 #include <QFileDialog>
 #include <iostream>
-
+#include "helpers.h"
 #include "opencv2/opencv.hpp"
-//#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/highgui/highgui.hpp"
 #include "webcam.h"
 
 
