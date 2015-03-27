@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
     connect(ui->showWebcam, SIGNAL(clicked()), this, SLOT(showWebcam()));
+    connect(ui->thresholdButton, SIGNAL(clicked()), this, SLOT(showThreshold()));
+    connect(ui->showSquares, SIGNAL(clicked()), this, SLOT(showSquares()));
+    connect(ui->showLines, SIGNAL(clicked()), this, SLOT(showLines()));
 }
 
 
@@ -26,6 +29,105 @@ void MainWindow::showWebcam() {
     Webcam cam;
     cam.showRGB();
 }
+
+
+void MainWindow::showThreshold() {
+    if (this->curImage.empty()) {
+        cout << "No image!" << endl;
+        return;
+    }
+
+    Mat src = this->curImage;
+    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
+    doThreshold(src,dst);
+
+    if (thresholdWindow){
+        cvDestroyWindow("threshold");
+        thresholdWindow = false;
+    } else {
+        namedWindow("threshold",CV_WINDOW_AUTOSIZE);
+        imshow("threshold", dst);
+        thresholdWindow = true;
+    }
+
+
+//    bool die(false);
+//    while (!die) {
+//        namedWindow("threshold",CV_WINDOW_AUTOSIZE);
+//        imshow("threshold", dst);
+
+//        char k = cvWaitKey(5);
+//        if( k == 27 ){
+//            cvDestroyWindow("threshold");
+//            break;
+//        }
+////        if( k == 8 ) {
+////            std::ostringstream file;
+////            file << filename << i_snap << suffix;
+////            cv::imwrite(file.str(),dst);
+////            i_snap++;
+////        }
+//    }
+}
+
+
+void MainWindow::showSquares() {
+    if (this->curImage.empty()) {
+        cout << "No image!" << endl;
+        return;
+    }
+
+    Mat src = this->curImage;
+    Mat dst;
+    vector<vector<Point> > squares;
+    cvtColor(src, dst, CV_BGR2RGB);
+    findSquares(dst, squares);
+    drawSquares(dst, squares);
+
+    if (squaresWindow){
+        cvDestroyWindow("squares");
+        squaresWindow = false;
+    } else {
+        namedWindow("squares",CV_WINDOW_AUTOSIZE);
+        imshow("squares", dst);
+        squaresWindow = true;
+    }
+}
+
+
+
+
+void MainWindow::showLines() {
+    if (this->curImage.empty()) {
+        cout << "No image!" << endl;
+        return;
+    }
+
+    Mat src = this->curImage;
+    Mat dst;
+    vector<vector<Point> > squares;
+
+    cvtColor(src, dst, CV_BGR2RGB);
+    doThreshold(dst,src);
+    doLines(src,dst);
+
+    if (linesWindow){
+        cvDestroyWindow("lines");
+        linesWindow = false;
+    } else {
+        namedWindow("lines",CV_WINDOW_AUTOSIZE);
+        imshow("lines", dst);
+        linesWindow = true;
+    }
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -46,6 +148,28 @@ void MainWindow::saveImage(){
 }
 
 
+void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
+    int srcWidth = src.cols;
+    int srcHeight = src.rows;
+
+    float srcRatio = (float) srcWidth / (float) srcHeight;
+
+    float widthRatio = destWidth / srcWidth;
+    float heightRatio = destHeight / srcHeight;
+
+    float newWidth = 0;
+    float newHeight = 0;
+
+    if (srcWidth > srcHeight) {
+        destHeight = destWidth / srcRatio;
+    } else {
+        destWidth = destHeight * srcRatio;
+    }
+    cv::resize(src, dst,Size((int)round(destWidth), (int)round(destHeight)),0,0);
+}
+
+
+
 void MainWindow::loadImage(){
     // open file dialog
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
@@ -55,6 +179,7 @@ void MainWindow::loadImage(){
 
     // open image as CV image
     Mat src = imread(fileName.toStdString(),CV_LOAD_IMAGE_COLOR);
+    cvtColor(src, src, CV_BGR2RGB);
     Mat dst(Size(640,480),CV_8UC3,Scalar(0));
 
     fitImage(src, dst, 640, 480);
@@ -65,7 +190,6 @@ void MainWindow::loadImage(){
 }
 
 void MainWindow::drawImage(Mat src){
-    cvtColor(src, src, CV_BGR2RGB);
     QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
     ui->imageDisplay->setPixmap(pix);
 }
@@ -74,7 +198,6 @@ void MainWindow::drawImage(Mat src){
 void MainWindow::redrawImage(){
     Mat src = this->curImage;
     // convert color models
-    cvtColor(src, src, CV_BGR2RGB);
     QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
     ui->imageDisplay->setPixmap(pix);
 }

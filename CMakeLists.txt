@@ -3,6 +3,12 @@
 cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0020 NEW)
 
+ADD_DEFINITIONS(
+    -std=c++11 # Or -std=c++0x
+    # Other flags
+)
+
+
 set(PROJECT "idOCR")
 
 project(${PROJECT})

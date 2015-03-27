@@ -22,22 +22,27 @@ namespace Ui
 class MainWindow : public QMainWindow {
     Q_OBJECT
     Mat curImage;
-
+    QScopedPointer<Ui::MainWindow> ui;
 
 public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
     void drawImage(Mat image);
 
-
 private:
-    QScopedPointer<Ui::MainWindow> ui;
     void redrawImage();
+    void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
+    bool thresholdWindow = false;
+    bool squaresWindow = false;
+    bool linesWindow = false;
 
 private slots:
     void loadImage();
     void saveImage();
     void showWebcam();
+    void showThreshold();
+    void showSquares();
+    void showLines();
 };
 
 #endif
