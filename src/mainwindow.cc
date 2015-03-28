@@ -8,7 +8,7 @@ using namespace cv;
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
-
+    setAcceptDrops(true);
     ui->setupUi(this);
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->thresholdButton, SIGNAL(clicked()), this, SLOT(showThreshold()));
     connect(ui->showSquares, SIGNAL(clicked()), this, SLOT(showSquares()));
     connect(ui->showLines, SIGNAL(clicked()), this, SLOT(showLines()));
+    connect(ui->showEqualized, SIGNAL(clicked()), this, SLOT(showEqualized()));
 }
 
 
@@ -23,6 +24,38 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
 }
+
+
+void MainWindow::dropEvent(QDropEvent *ev)
+{
+    QList<QUrl> urls = ev->mimeData()->urls();
+    QString filename;
+
+    if (urls.length() == 1){
+        QUrl url = urls.first();
+        filename = QString(url.toString());
+        filename.replace(QString("file://"), QString(""));
+
+        loadLocalImage(filename);
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("Only one file is supported for drag and drop loading!");
+        msgBox.exec();
+
+//        foreach(QUrl url, urls)
+//        {
+
+//        }
+
+    }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
+{
+    ev->accept();
+}
+
+
 
 
 void MainWindow::showWebcam() {
@@ -123,7 +156,25 @@ void MainWindow::showLines() {
 
 
 
+void MainWindow::showEqualized(){
+    if (this->curImage.empty()) {
+        cout << "No image!" << endl;
+        return;
+    }
 
+    Mat src = this->curImage;
+    cvtColor(src, src, CV_BGR2RGB);
+    src = equalizeIntensity(src);
+
+    if (equalizedWindow){
+        cvDestroyWindow("equalized");
+        equalizedWindow = false;
+    } else {
+        namedWindow("equalized",CV_WINDOW_AUTOSIZE);
+        imshow("equalized", src);
+        equalizedWindow = true;
+    }
+}
 
 
 
@@ -173,6 +224,11 @@ void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHe
 void MainWindow::loadImage(){
     // open file dialog
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
+    loadLocalImage(fileName);
+}
+
+
+void MainWindow::loadLocalImage(QString fileName) {
     if (fileName.length() < 1) return;
 
     cout << "Loaded image name: "<< fileName.toStdString() << endl;
@@ -188,6 +244,9 @@ void MainWindow::loadImage(){
     this->curImage = dst;
     redrawImage();
 }
+
+
+
 
 void MainWindow::drawImage(Mat src){
     QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));

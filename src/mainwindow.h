@@ -10,6 +10,13 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "webcam.h"
 
+#include <QDropEvent>
+#include <QUrl>
+#include <QDebug>
+#include <QList>
+#include <QMimeData>
+#include <QMessageBox>
+
 
 using namespace cv;
 using namespace std;
@@ -29,12 +36,19 @@ public:
     virtual ~MainWindow();
     void drawImage(Mat image);
 
+protected:
+    void dragEnterEvent(QDragEnterEvent *e);
+    void dropEvent(QDropEvent *e);
+
 private:
     void redrawImage();
     void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
+    void loadLocalImage(QString fileName);
+
     bool thresholdWindow = false;
     bool squaresWindow = false;
     bool linesWindow = false;
+    bool equalizedWindow = false;
 
 private slots:
     void loadImage();
@@ -43,6 +57,7 @@ private slots:
     void showThreshold();
     void showSquares();
     void showLines();
+    void showEqualized();
 };
 
 #endif

@@ -311,3 +311,28 @@ void doLines(Mat & src, Mat & dst) {
     }
 }
 
+
+Mat equalizeIntensity(const Mat& inputImage)
+{
+    if(inputImage.channels() >= 3)
+    {
+        Mat ycrcb;
+
+        cvtColor(inputImage,ycrcb,CV_BGR2YCrCb);
+
+        vector<Mat> channels;
+        split(ycrcb,channels);
+
+        equalizeHist(channels[0], channels[0]);
+
+        Mat result;
+        merge(channels,ycrcb);
+        cout << "equalized" << endl;
+        cvtColor(ycrcb,result,CV_YCrCb2BGR);
+
+        return result;
+    }
+
+    cout << "not equalized" << endl;
+    return inputImage;
+}

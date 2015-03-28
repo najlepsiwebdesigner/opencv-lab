@@ -35,42 +35,50 @@ void Webcam::showRGB() {
     // MyFreenectDevice& device = freenect.createDevice(0);
     // by these two lines:
 
-    Freenect::Freenect freenect;
-    MyFreenectDevice& device = freenect.createDevice<MyFreenectDevice>(0);
+    try {
+        Freenect::Freenect freenect;
+        MyFreenectDevice& device = freenect.createDevice<MyFreenectDevice>(0);
 
-    namedWindow("rgb",CV_WINDOW_AUTOSIZE);
-    namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
-    namedWindow("processed",CV_WINDOW_AUTOSIZE);
-    namedWindow("squares",CV_WINDOW_AUTOSIZE);
-    device.startVideo();
-    while (!die) {
-        device.getVideo(rgbMat);
+        namedWindow("rgb",CV_WINDOW_AUTOSIZE);
+        namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
+        namedWindow("processed",CV_WINDOW_AUTOSIZE);
+        namedWindow("squares",CV_WINDOW_AUTOSIZE);
 
-        findSquares(rgbMat, squares);
-        cv::imshow("thresholded", rgbMat);
+        device.startVideo();
+        while (!die) {
+            device.getVideo(rgbMat);
 
-//        threshold(rgbMat, thresholdedMat);
-//        contours(thresholdedMat, contoursMat);
-//        cv::imshow("processed", contoursMat);
-//        cv::imshow("rgb", rgbMat);
-//        drawSquares(rgbMat, squares);
+            findSquares(rgbMat, squares);
+            cv::imshow("thresholded", rgbMat);
+
+    //        threshold(rgbMat, thresholdedMat);
+    //        contours(thresholdedMat, contoursMat);
+    //        cv::imshow("processed", contoursMat);
+    //        cv::imshow("rgb", rgbMat);
+    //        drawSquares(rgbMat, squares);
 
 
-        char k = cvWaitKey(5);
-        if( k == 27 ){
-            cvDestroyWindow("rgb");
-            cvDestroyWindow("processed");
-            cvDestroyWindow("thresholded");
-            cvDestroyWindow("squares");
-            break;
+            char k = cvWaitKey(5);
+            if( k == 27 ){
+                cvDestroyWindow("rgb");
+                cvDestroyWindow("processed");
+                cvDestroyWindow("thresholded");
+                cvDestroyWindow("squares");
+                break;
+            }
+            if( k == 8 ) {
+                std::ostringstream file;
+                file << filename << i_snap << suffix;
+                cv::imwrite(file.str(),rgbMat);
+                i_snap++;
+            }
         }
-        if( k == 8 ) {
-            std::ostringstream file;
-            file << filename << i_snap << suffix;
-            cv::imwrite(file.str(),rgbMat);
-            i_snap++;
-        }
+
+        device.stopVideo();
     }
-
-    device.stopVideo();
+    catch (exception& e) {
+        QMessageBox msgBox;
+        msgBox.setText(e.what());
+        msgBox.exec();
+    }
 }

@@ -160,6 +160,19 @@
      <string>square detection</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="showEqualized">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>550</y>
+      <width>115</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>equalized</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>
