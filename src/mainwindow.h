@@ -9,7 +9,7 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "webcam.h"
-
+#include "batchwindow.h"
 #include <QDropEvent>
 #include <QUrl>
 #include <QDebug>
@@ -34,6 +34,7 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
+
     void drawImage(Mat image);
 
 protected:
@@ -44,6 +45,7 @@ private:
     void redrawImage();
     void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
     void loadLocalImage(QString fileName);
+    batchWindow *batchWin;
 
     bool thresholdWindow = false;
     bool squaresWindow = false;
@@ -58,6 +60,7 @@ private slots:
     void showSquares();
     void showLines();
     void showEqualized();
+    void showBatchWindow();
 };
 
 #endif

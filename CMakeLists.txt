@@ -26,6 +26,8 @@ include_directories("/usr/local/include/libusb-1.0")
 
 set(SOURCE_FILES
     src/main.cc
+    src/batchwindow.h
+    src/batchwindow.cpp
     src/mainwindow.h
     src/mainwindow.cc
     src/webcam.h
@@ -34,6 +36,7 @@ set(SOURCE_FILES
     src/helpers.cpp
     src/myfreenectdevice.h
     src/myfreenectdevice.cpp
+
 )
 
 if (WIN32)
@@ -42,6 +45,7 @@ endif ()
 
 set(UI_FILES
     ui/mainwindow.ui
+    ui/batchwindow.ui
 )
 source_group("UI Files" FILES ${UI_FILES})
 

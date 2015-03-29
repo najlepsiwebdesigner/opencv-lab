@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->showSquares, SIGNAL(clicked()), this, SLOT(showSquares()));
     connect(ui->showLines, SIGNAL(clicked()), this, SLOT(showLines()));
     connect(ui->showEqualized, SIGNAL(clicked()), this, SLOT(showEqualized()));
+    connect(ui->batchWindow, SIGNAL(clicked()), this, SLOT(showBatchWindow()));
 }
 
 
@@ -24,6 +25,21 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
 }
+
+
+
+void MainWindow::showBatchWindow() {
+    // modal window approach
+    batchWindow window;
+    window.setModal(true);
+    window.exec();
+
+//    batchWin = new batchWindow(this);
+//    batchWin->show();
+}
+
+
+
 
 
 void MainWindow::dropEvent(QDropEvent *ev)
