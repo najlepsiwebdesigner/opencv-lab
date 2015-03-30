@@ -10,6 +10,17 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setAcceptDrops(true);
     ui->setupUi(this);
+
+    operationsModel = new QStringListModel(this);
+    QStringList List;
+    List << "Threshold" << "Histogram equalization" << "Square detection" << "Line detection";
+    operationsModel->setStringList(List);
+    ui->operationsList->setModel(operationsModel);
+
+    QModelIndex initialCellIndex = operationsModel->index(0);
+
+    ui->operationsList->setCurrentIndex(initialCellIndex);
+
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
     connect(ui->showWebcam, SIGNAL(clicked()), this, SLOT(showWebcam()));
@@ -18,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->showLines, SIGNAL(clicked()), this, SLOT(showLines()));
     connect(ui->showEqualized, SIGNAL(clicked()), this, SLOT(showEqualized()));
     connect(ui->batchWindow, SIGNAL(clicked()), this, SLOT(showBatchWindow()));
+    connect(ui->executeButton, SIGNAL(clicked()), this, SLOT(executeOperation()));
 }
 
 
@@ -277,3 +289,7 @@ void MainWindow::redrawImage(){
     ui->imageDisplay->setPixmap(pix);
 }
 
+void MainWindow::executeOperation() {
+    int row = ui->operationsList->currentIndex().row();
+    qDebug() << "Selected line: " << row;
+}

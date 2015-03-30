@@ -19,10 +19,13 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets REQUIRED)
 find_package( OpenCV REQUIRED )
+find_package( Boost COMPONENTS system filesystem REQUIRED)
+
 
 # libfreenect support
 include_directories("/usr/local/include/libfreenect")
 include_directories("/usr/local/include/libusb-1.0")
+include_directories( ${Boost_INCLUDE_DIRS} )
 
 set(SOURCE_FILES
     src/main.cc
@@ -67,8 +70,7 @@ add_executable(${PROJECT} MACOSX_BUNDLE
 )
 
 
-
-
+target_link_libraries(${PROJECT} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT} ${OpenCV_LIBS})
 target_link_libraries(${PROJECT} "freenect")
 

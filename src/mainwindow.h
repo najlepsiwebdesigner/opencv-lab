@@ -16,6 +16,9 @@
 #include <QList>
 #include <QMimeData>
 #include <QMessageBox>
+#include <QStringList>
+#include <QStringListModel>
+#include <QModelIndex>
 
 
 using namespace cv;
@@ -31,6 +34,7 @@ class MainWindow : public QMainWindow {
     Mat curImage;
     QScopedPointer<Ui::MainWindow> ui;
 
+
 public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
@@ -42,6 +46,9 @@ protected:
     void dropEvent(QDropEvent *e);
 
 private:
+
+    QStringListModel *operationsModel;
+
     void redrawImage();
     void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
     void loadLocalImage(QString fileName);
@@ -61,6 +68,7 @@ private slots:
     void showLines();
     void showEqualized();
     void showBatchWindow();
+    void executeOperation();
 };
 
 #endif
