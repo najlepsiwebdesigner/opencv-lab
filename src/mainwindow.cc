@@ -5,43 +5,6 @@ using namespace std;
 using namespace cv;
 
 
-void MainWindow::equalize(Mat & image) {
-    image = equalizeIntensity(image);
-}
-
-void MainWindow::lines(Mat & image) {
-    Mat src = image;
-    Mat dst;
-    cvtColor(src, dst, CV_BGR2RGB);
-    doThreshold(dst,src);
-    doLines(src,dst);
-
-    image = dst;
-}
-
-void MainWindow::threshold(Mat & image) {
-    Mat src = image;
-    Mat dst;
-    cvtColor(src, dst, CV_BGR2RGB);
-    doThreshold(dst,src);
-    doLines(src,dst);
-//    cvtColor(src, dst, CV_RGB2BGR);
-    image = dst;
-}
-
-
-void MainWindow::squares(Mat & image) {
-    Mat src = image;
-    Mat dst;
-    vector<vector<Point> > squares;
-    cvtColor(src, dst, CV_BGR2RGB);
-    findSquares(dst, squares);
-    drawSquares(dst, squares);
-    cvtColor(dst, dst, CV_RGB2BGR);
-    image = dst;
-}
-
-
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -49,51 +12,32 @@ MainWindow::MainWindow(QWidget *parent)
     setAcceptDrops(true);
     ui->setupUi(this);
 
+    List << "threshold" << "equalize" << "squares" << "lines";
+
     operationsMap.insert(FunctionMap::value_type("equalize",MainWindow::equalize));
     operationsMap.insert(FunctionMap::value_type("lines",MainWindow::lines));
     operationsMap.insert(FunctionMap::value_type("threshold",MainWindow::threshold));
     operationsMap.insert(FunctionMap::value_type("squares",MainWindow::squares));
 
-
     operationsModel = new QStringListModel(this);
-    QStringList List;
-    List << "Threshold" << "Histogram equalization" << "Square detection" << "Line detection";
     operationsModel->setStringList(List);
     ui->operationsList->setModel(operationsModel);
-
     QModelIndex initialCellIndex = operationsModel->index(0);
-
     ui->operationsList->setCurrentIndex(initialCellIndex);
 
     connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
     connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
     connect(ui->showWebcam, SIGNAL(clicked()), this, SLOT(showWebcam()));
-    connect(ui->thresholdButton, SIGNAL(clicked()), this, SLOT(showThreshold()));
-    connect(ui->showSquares, SIGNAL(clicked()), this, SLOT(showSquares()));
-    connect(ui->showLines, SIGNAL(clicked()), this, SLOT(showLines()));
-    connect(ui->showEqualized, SIGNAL(clicked()), this, SLOT(showEqualized()));
     connect(ui->batchWindow, SIGNAL(clicked()), this, SLOT(showBatchWindow()));
     connect(ui->executeButton, SIGNAL(clicked()), this, SLOT(executeOperation()));
 }
 
+MainWindow::~MainWindow(){}
 
-
-MainWindow::~MainWindow()
+void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
 {
+    ev->accept();
 }
-
-
-
-void MainWindow::showBatchWindow() {
-    // modal window approach
-    batchWindow window;
-    window.setModal(true);
-    window.exec();
-}
-
-
-
-
 
 void MainWindow::dropEvent(QDropEvent *ev)
 {
@@ -112,17 +56,16 @@ void MainWindow::dropEvent(QDropEvent *ev)
         msgBox.exec();
 
 //        foreach(QUrl url, urls)
-//        {
-
-//        }
-
     }
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
-{
-    ev->accept();
+void MainWindow::showBatchWindow() {
+    // modal window approach
+    batchWindow window;
+    window.setModal(true);
+    window.exec();
 }
+
 
 
 
@@ -131,85 +74,6 @@ void MainWindow::showWebcam() {
     Webcam cam;
     cam.showRGB();
 }
-
-
-void MainWindow::showThreshold() {
-    if (this->curImage.empty()) {
-        cout << "No image!" << endl;
-        return;
-    }
-
-    FunctionMap::const_iterator call;
-    call = operationsMap.find("threshold");
-
-    if (call != operationsMap.end())
-       (*call).second(this->curImage);
-    else
-       cout << "Unknown call requested" << endl;
-
-    redrawImage();
-}
-
-
-void MainWindow::showSquares() {
-    if (this->curImage.empty()) {
-        cout << "No image!" << endl;
-        return;
-    }
-    FunctionMap::const_iterator call;
-    call = operationsMap.find("squares");
-
-    if (call != operationsMap.end())
-       (*call).second(this->curImage);
-    else
-       cout << "Unknown call requested" << endl;
-
-    redrawImage();
-}
-
-
-
-
-void MainWindow::showLines() {
-    if (this->curImage.empty()) {
-        cout << "No image!" << endl;
-        return;
-    }
-    FunctionMap::const_iterator call;
-    call = operationsMap.find("lines");
-
-    if (call != operationsMap.end())
-       (*call).second(this->curImage);
-    else
-       cout << "Unknown call requested" << endl;
-
-    redrawImage();
-
-}
-
-
-
-void MainWindow::showEqualized(){
-    if (this->curImage.empty()) {
-        cout << "No image!" << endl;
-        return;
-    }
-
-    FunctionMap::const_iterator call;
-    call = operationsMap.find("equalize");
-
-    if (call != operationsMap.end())
-       (*call).second(this->curImage);
-    else
-       cout << "Unknown call requested" << endl;
-
-    redrawImage();
-}
-
-
-
-
-
 
 
 
@@ -250,9 +114,7 @@ void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHe
 }
 
 
-
 void MainWindow::loadImage(){
-    // open file dialog
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
     loadLocalImage(fileName);
 }
@@ -275,9 +137,6 @@ void MainWindow::loadLocalImage(QString fileName) {
     redrawImage();
 }
 
-
-
-
 void MainWindow::drawImage(Mat src){
     QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
     ui->imageDisplay->setPixmap(pix);
@@ -293,5 +152,58 @@ void MainWindow::redrawImage(){
 
 void MainWindow::executeOperation() {
     int row = ui->operationsList->currentIndex().row();
-    qDebug() << "Selected line: " << row;
+
+    if (this->curImage.empty()) {
+        cout << "No image!" << endl;
+        return;
+    }
+
+    FunctionMap::const_iterator call;
+    string functionName = List[row].toStdString();
+    call = operationsMap.find(functionName);
+
+    if (call != operationsMap.end())
+       (*call).second(this->curImage);
+    else
+       cout << "Unknown call requested" << endl;
+
+    redrawImage();
 }
+
+
+
+
+void MainWindow::equalize(Mat & image) {
+    image = equalizeIntensity(image);
+}
+
+void MainWindow::lines(Mat & image) {
+    Mat src = image;
+    Mat dst;
+    cvtColor(src, dst, CV_BGR2RGB);
+    doThreshold(dst,src);
+    doLines(src,dst);
+    image = dst;
+}
+
+void MainWindow::threshold(Mat & image) {
+    Mat src = image;
+    Mat dst;
+    cvtColor(src, dst, CV_BGR2RGB);
+    doThreshold(dst,src);
+    doLines(src,dst);
+    image = dst;
+}
+
+void MainWindow::squares(Mat & image) {
+    Mat src = image;
+    Mat dst;
+    vector<vector<Point> > squares;
+    cvtColor(src, dst, CV_BGR2RGB);
+    findSquares(dst, squares);
+    drawSquares(dst, squares);
+    cvtColor(dst, dst, CV_RGB2BGR);
+    image = dst;
+}
+
+

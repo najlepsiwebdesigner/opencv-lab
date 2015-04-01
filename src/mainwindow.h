@@ -44,6 +44,7 @@ class MainWindow : public QMainWindow {
     Mat curImage;
     QScopedPointer<Ui::MainWindow> ui;
     FunctionMap	operationsMap;
+    QStringList List;
 
     void static equalize(Mat & image);
     void static lines(Mat & image);
@@ -78,10 +79,10 @@ private slots:
     void loadImage();
     void saveImage();
     void showWebcam();
-    void showThreshold();
-    void showSquares();
-    void showLines();
-    void showEqualized();
+//    void showThreshold();
+//    void showSquares();
+//    void showLines();
+//    void showEqualized();
     void showBatchWindow();
     void executeOperation();
 };
