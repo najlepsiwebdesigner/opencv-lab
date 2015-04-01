@@ -126,8 +126,6 @@ void drawSquares( Mat& image, const vector<vector<Point> >& squares )
         int n = (int)squares[i].size();
         polylines(image, &p, &n, 1, true, Scalar(0,0,255), 1, CV_AA);
     }
-
-    imshow("squares", image);
 }
 
 

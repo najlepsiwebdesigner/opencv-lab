@@ -5,11 +5,55 @@ using namespace std;
 using namespace cv;
 
 
+void MainWindow::equalize(Mat & image) {
+    image = equalizeIntensity(image);
+}
+
+void MainWindow::lines(Mat & image) {
+    Mat src = image;
+    Mat dst;
+    cvtColor(src, dst, CV_BGR2RGB);
+    doThreshold(dst,src);
+    doLines(src,dst);
+
+    image = dst;
+}
+
+void MainWindow::threshold(Mat & image) {
+    Mat src = image;
+    Mat dst;
+    cvtColor(src, dst, CV_BGR2RGB);
+    doThreshold(dst,src);
+    doLines(src,dst);
+//    cvtColor(src, dst, CV_RGB2BGR);
+    image = dst;
+}
+
+
+void MainWindow::squares(Mat & image) {
+    Mat src = image;
+    Mat dst;
+    vector<vector<Point> > squares;
+    cvtColor(src, dst, CV_BGR2RGB);
+    findSquares(dst, squares);
+    drawSquares(dst, squares);
+    cvtColor(dst, dst, CV_RGB2BGR);
+    image = dst;
+}
+
+
+
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     setAcceptDrops(true);
     ui->setupUi(this);
+
+    operationsMap.insert(FunctionMap::value_type("equalize",MainWindow::equalize));
+    operationsMap.insert(FunctionMap::value_type("lines",MainWindow::lines));
+    operationsMap.insert(FunctionMap::value_type("threshold",MainWindow::threshold));
+    operationsMap.insert(FunctionMap::value_type("squares",MainWindow::squares));
+
 
     operationsModel = new QStringListModel(this);
     QStringList List;
@@ -45,9 +89,6 @@ void MainWindow::showBatchWindow() {
     batchWindow window;
     window.setModal(true);
     window.exec();
-
-//    batchWin = new batchWindow(this);
-//    batchWin->show();
 }
 
 
@@ -98,37 +139,15 @@ void MainWindow::showThreshold() {
         return;
     }
 
-    Mat src = this->curImage;
-    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
-    doThreshold(src,dst);
+    FunctionMap::const_iterator call;
+    call = operationsMap.find("threshold");
 
-    if (thresholdWindow){
-        cvDestroyWindow("threshold");
-        thresholdWindow = false;
-    } else {
-        namedWindow("threshold",CV_WINDOW_AUTOSIZE);
-        imshow("threshold", dst);
-        thresholdWindow = true;
-    }
+    if (call != operationsMap.end())
+       (*call).second(this->curImage);
+    else
+       cout << "Unknown call requested" << endl;
 
-
-//    bool die(false);
-//    while (!die) {
-//        namedWindow("threshold",CV_WINDOW_AUTOSIZE);
-//        imshow("threshold", dst);
-
-//        char k = cvWaitKey(5);
-//        if( k == 27 ){
-//            cvDestroyWindow("threshold");
-//            break;
-//        }
-////        if( k == 8 ) {
-////            std::ostringstream file;
-////            file << filename << i_snap << suffix;
-////            cv::imwrite(file.str(),dst);
-////            i_snap++;
-////        }
-//    }
+    redrawImage();
 }
 
 
@@ -137,22 +156,15 @@ void MainWindow::showSquares() {
         cout << "No image!" << endl;
         return;
     }
+    FunctionMap::const_iterator call;
+    call = operationsMap.find("squares");
 
-    Mat src = this->curImage;
-    Mat dst;
-    vector<vector<Point> > squares;
-    cvtColor(src, dst, CV_BGR2RGB);
-    findSquares(dst, squares);
-    drawSquares(dst, squares);
+    if (call != operationsMap.end())
+       (*call).second(this->curImage);
+    else
+       cout << "Unknown call requested" << endl;
 
-    if (squaresWindow){
-        cvDestroyWindow("squares");
-        squaresWindow = false;
-    } else {
-        namedWindow("squares",CV_WINDOW_AUTOSIZE);
-        imshow("squares", dst);
-        squaresWindow = true;
-    }
+    redrawImage();
 }
 
 
@@ -163,23 +175,16 @@ void MainWindow::showLines() {
         cout << "No image!" << endl;
         return;
     }
+    FunctionMap::const_iterator call;
+    call = operationsMap.find("lines");
 
-    Mat src = this->curImage;
-    Mat dst;
-    vector<vector<Point> > squares;
+    if (call != operationsMap.end())
+       (*call).second(this->curImage);
+    else
+       cout << "Unknown call requested" << endl;
 
-    cvtColor(src, dst, CV_BGR2RGB);
-    doThreshold(dst,src);
-    doLines(src,dst);
+    redrawImage();
 
-    if (linesWindow){
-        cvDestroyWindow("lines");
-        linesWindow = false;
-    } else {
-        namedWindow("lines",CV_WINDOW_AUTOSIZE);
-        imshow("lines", dst);
-        linesWindow = true;
-    }
 }
 
 
@@ -190,18 +195,15 @@ void MainWindow::showEqualized(){
         return;
     }
 
-    Mat src = this->curImage;
-    cvtColor(src, src, CV_BGR2RGB);
-    src = equalizeIntensity(src);
+    FunctionMap::const_iterator call;
+    call = operationsMap.find("equalize");
 
-    if (equalizedWindow){
-        cvDestroyWindow("equalized");
-        equalizedWindow = false;
-    } else {
-        namedWindow("equalized",CV_WINDOW_AUTOSIZE);
-        imshow("equalized", src);
-        equalizedWindow = true;
-    }
+    if (call != operationsMap.end())
+       (*call).second(this->curImage);
+    else
+       cout << "Unknown call requested" << endl;
+
+    redrawImage();
 }
 
 
