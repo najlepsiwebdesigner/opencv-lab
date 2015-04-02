@@ -28,5 +28,4 @@ Mat equalizeIntensity(const Mat& inputImage);
 
 
 void doLines(Mat & src, Mat & dst);
-void doThreshold(Mat & src, Mat & dst);
 #endif // HELPERS

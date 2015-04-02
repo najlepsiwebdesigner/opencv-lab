@@ -65,7 +65,7 @@ void findSquares( const Mat& image, vector<vector<Point> >& squares )
                 Canny(gray0, gray, 0, thresh, 5);
                 // dilate canny output to remove potential
                 // holes between edge segments
-                dilate(gray, gray, Mat(), Point(-1,-1));
+                dilate(gray, gray, Mat(), Point(1,-1));
             }
             else
             {
@@ -75,7 +75,29 @@ void findSquares( const Mat& image, vector<vector<Point> >& squares )
             }
 
             // find contours and store them all as a list
-            findContours(gray, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
+            findContours(gray, contours, RETR_LIST, CV_CHAIN_APPROX_TC89_L1);
+
+
+
+
+//            int largest_area=0;
+//            int largest_contour_index=0;
+//            for( int i = 0; i< contours.size(); i++ ) // iterate through each contour.
+//            {
+//                double a=contourArea( contours[i],false);  //  Find the area of contour
+//                if(a>largest_area){
+//                    largest_area=a;
+//                    largest_contour_index=i;                //Store the index of largest contour
+//                }
+//            }
+
+
+
+//            cv::drawContours(gray, contours,largest_contour_index,Scalar(255,255,255));
+//            cv::imshow("test", gray);
+//            break;
+
+
 
             vector<Point> approx;
 
@@ -93,8 +115,8 @@ void findSquares( const Mat& image, vector<vector<Point> >& squares )
                 // area may be positive or negative - in accordance with the
                 // contour orientation
                 if( approx.size() == 4 &&
-                    fabs(contourArea(Mat(approx))) > 1000 &&
-                    isContourConvex(Mat(approx)) )
+                    fabs(contourArea(Mat(approx))) > 1000 && isContourConvex(Mat(approx))
+                   )
                 {
                     double maxCosine = 0;
 
@@ -203,13 +225,7 @@ bool sortByLength(const cv::Vec4i &lineA, const cv::Vec4i &lineB) {
     return vectorLength(cv::Point(lineA[0], lineA[1]), cv::Point(lineA[2], lineA[3])) > vectorLength(cv::Point(lineB[0], lineB[1]), cv::Point(lineB[2], lineB[3]));
 }
 
-void doThreshold(Mat & src, Mat & dst){
-    cv::cvtColor(src,dst , CV_BGR2GRAY);
-    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
-    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
-//    cv::adaptiveThreshold(dst,dst,255,ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 2);
-}
+
 
 
 void doLines(Mat & src, Mat & dst) {
@@ -243,12 +259,12 @@ void doLines(Mat & src, Mat & dst) {
 
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dst, lines, 1, CV_PI/360, 75, 40, 10 );
+    cv::HoughLinesP(dst, lines, 1, CV_PI/360, 100, 20, 10 );
     std::sort(lines.begin(), lines.end(), sortByLength);
     filterLines(lines);
     cv::cvtColor(dst,dst , CV_GRAY2RGB);
 
-    if (lines.size() < 100){
+//    if (lines.size() < 100){
         // Expand and draw the lines
         for (int i = 0; i < lines.size(); i++)
         {
@@ -306,7 +322,7 @@ void doLines(Mat & src, Mat & dst) {
         sortCorners(corners, center);
         std::cout << "The corners were not sorted correctly!" << std::endl;
         cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
-    }
+//    }
 }
 
 
@@ -315,17 +331,12 @@ Mat equalizeIntensity(const Mat& inputImage)
     if(inputImage.channels() >= 3)
     {
         Mat ycrcb;
-
         cvtColor(inputImage,ycrcb,CV_BGR2YCrCb);
-
         vector<Mat> channels;
         split(ycrcb,channels);
-
         equalizeHist(channels[0], channels[0]);
-
         Mat result;
         merge(channels,ycrcb);
-        cout << "equalized" << endl;
         cvtColor(ycrcb,result,CV_YCrCb2BGR);
 
         return result;

@@ -1,15 +1,24 @@
 #ifndef mainwindow_h
 #define mainwindow_h
 
+// std
+#include <iostream>
+#include <string.h>
+#include <map>
+
+// app
+#include "helpers.h"
+#include "webcam.h"
+#include "batchwindow.h"
+
+// cv
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui/highgui.hpp"
+
+// qt
 #include <QMainWindow>
 #include <QScopedPointer>
 #include <QFileDialog>
-#include <iostream>
-#include "helpers.h"
-#include "opencv2/opencv.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "webcam.h"
-#include "batchwindow.h"
 #include <QDropEvent>
 #include <QUrl>
 #include <QDebug>
@@ -20,14 +29,8 @@
 #include <QStringListModel>
 #include <QModelIndex>
 
-#include <map>
-//#include <boost/function.hpp>
-
-
 using namespace cv;
 using namespace std;
-
-
 
 namespace Ui
 {
@@ -50,6 +53,11 @@ class MainWindow : public QMainWindow {
     void static lines(Mat & image);
     void static threshold(Mat & image);
     void static squares(Mat & image);
+    void static hsv(Mat & src);
+    void static resizedownup(Mat & image);
+    void static adaptiveBilateralFilter(Mat & image);
+
+    string  getSelectedOperation();
 
 public:
     MainWindow(QWidget *parent = 0);
@@ -79,10 +87,6 @@ private slots:
     void loadImage();
     void saveImage();
     void showWebcam();
-//    void showThreshold();
-//    void showSquares();
-//    void showLines();
-//    void showEqualized();
     void showBatchWindow();
     void executeOperation();
 };

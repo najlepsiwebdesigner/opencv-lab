@@ -4,20 +4,21 @@
 using namespace std;
 using namespace cv;
 
-
-
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     setAcceptDrops(true);
     ui->setupUi(this);
 
-    List << "threshold" << "equalize" << "squares" << "lines";
+    List << "threshold" << "equalize" << "squares" << "lines" << "HSV" << "resizeDownUp" << "adaptive bilateral";
 
     operationsMap.insert(FunctionMap::value_type("equalize",MainWindow::equalize));
     operationsMap.insert(FunctionMap::value_type("lines",MainWindow::lines));
     operationsMap.insert(FunctionMap::value_type("threshold",MainWindow::threshold));
     operationsMap.insert(FunctionMap::value_type("squares",MainWindow::squares));
+    operationsMap.insert(FunctionMap::value_type("HSV",MainWindow::hsv));
+    operationsMap.insert(FunctionMap::value_type("resizeDownUp",MainWindow::resizedownup));
+    operationsMap.insert(FunctionMap::value_type("adaptive bilateral",MainWindow::adaptiveBilateralFilter));
 
     operationsModel = new QStringListModel(this);
     operationsModel->setStringList(List);
@@ -150,16 +151,23 @@ void MainWindow::redrawImage(){
     ui->imageDisplay->setPixmap(pix);
 }
 
-void MainWindow::executeOperation() {
-    int row = ui->operationsList->currentIndex().row();
 
+string MainWindow::getSelectedOperation() {
+    int row = ui->operationsList->currentIndex().row();
+    FunctionMap::const_iterator call;
+    return List[row].toStdString();
+}
+
+
+void MainWindow::executeOperation() {
     if (this->curImage.empty()) {
         cout << "No image!" << endl;
         return;
     }
 
+    string functionName = getSelectedOperation();
+
     FunctionMap::const_iterator call;
-    string functionName = List[row].toStdString();
     call = operationsMap.find(functionName);
 
     if (call != operationsMap.end())
@@ -171,8 +179,6 @@ void MainWindow::executeOperation() {
 }
 
 
-
-
 void MainWindow::equalize(Mat & image) {
     image = equalizeIntensity(image);
 }
@@ -180,19 +186,23 @@ void MainWindow::equalize(Mat & image) {
 void MainWindow::lines(Mat & image) {
     Mat src = image;
     Mat dst;
-    cvtColor(src, dst, CV_BGR2RGB);
-    doThreshold(dst,src);
-    doLines(src,dst);
-    image = dst;
+    cv::cvtColor(src,dst , CV_BGR2GRAY);
+    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
+    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
+    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
+    cv::cvtColor(dst,image, CV_GRAY2RGB);
+    doLines(dst,src);
+    image = src;
 }
 
 void MainWindow::threshold(Mat & image) {
-    Mat src = image;
     Mat dst;
-    cvtColor(src, dst, CV_BGR2RGB);
-    doThreshold(dst,src);
-    doLines(src,dst);
-    image = dst;
+    cv::cvtColor(image,dst, CV_RGB2GRAY);
+    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
+//    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
+//    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
+    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
+    cv::cvtColor(dst,image, CV_GRAY2RGB);
 }
 
 void MainWindow::squares(Mat & image) {
@@ -205,5 +215,29 @@ void MainWindow::squares(Mat & image) {
     cvtColor(dst, dst, CV_RGB2BGR);
     image = dst;
 }
+void MainWindow::hsv(Mat & src) {
+    cv::Mat hsv;
+    cv::cvtColor(src, hsv, CV_BGR2HSV);
+    cv::Mat hue(src.size(), CV_8U);
+    //the third arguments are two number a pair, (0, 0) means copy the data of channels 0(hsv) to channels 0(hue)
+    cv::mixChannels(hsv, hue, {0, 0});
+    cv::Mat otsuMat;
+    cv::adaptiveThreshold(hue,otsuMat,255, CV_ADAPTIVE_THRESH_MEAN_C , CV_THRESH_BINARY, 3, 0);
+    cv::cvtColor(otsuMat,src, CV_GRAY2RGB);
+}
 
 
+void MainWindow::resizedownup(Mat & image){
+    Mat small;
+    cv::resize(image, small,Size(320,200),0,0);
+    cv::medianBlur(small, small, 9);
+    cv::resize(small, image, Size(image.cols,image.rows));
+}
+
+
+void MainWindow::adaptiveBilateralFilter(Mat & image){
+    Mat dst;
+//    cv::bilateralFilter ( image, dst, 15, 100, 35 );
+    cv::adaptiveBilateralFilter(image, dst, Size(3,3),3);
+    image = dst;
+}
