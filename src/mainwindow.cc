@@ -138,28 +138,19 @@ void MainWindow::loadLocalImage(QString fileName) {
     redrawImage();
 }
 
-void MainWindow::drawImage(Mat src){
-    QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
-    ui->imageDisplay->setPixmap(pix);
-}
-
-
 void MainWindow::redrawImage(){
     Mat src = this->curImage;
     // convert color models
     QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
 
-
     QLabel *picLabel = new QLabel();
     picLabel->setPixmap(pix);
-    picLabel->setScaledContents(true);
-    picLabel->setFixedWidth(320);
-    picLabel->setFixedHeight(240);
-    ui->imagesLayout->addWidget(picLabel);
-
+    picLabel->setFixedWidth(640);
+    picLabel->setFixedHeight(480);
+    ui->imagesLayout->insertWidget(0,picLabel);
+    QScrollBar * bar = ui->scrollArea->verticalScrollBar();
+    bar->setSliderPosition(0);
     loadedImagesCount++;
-
-    ui->imageDisplay->setPixmap(pix);
 }
 
 

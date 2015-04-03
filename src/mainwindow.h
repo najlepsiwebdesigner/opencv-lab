@@ -28,6 +28,8 @@
 #include <QStringList>
 #include <QStringListModel>
 #include <QModelIndex>
+#include <QScrollBar>
+#include <QLabel>
 
 using namespace cv;
 using namespace std;
@@ -65,7 +67,7 @@ public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
 
-    void drawImage(Mat image);
+//    void drawImage(Mat image);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e);
