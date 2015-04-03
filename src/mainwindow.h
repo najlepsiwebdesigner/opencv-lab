@@ -57,6 +57,8 @@ class MainWindow : public QMainWindow {
     void static resizedownup(Mat & image);
     void static adaptiveBilateralFilter(Mat & image);
 
+    int loadedImagesCount = 0;
+
     string  getSelectedOperation();
 
 public:

@@ -148,6 +148,17 @@ void MainWindow::redrawImage(){
     Mat src = this->curImage;
     // convert color models
     QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
+
+
+    QLabel *picLabel = new QLabel();
+    picLabel->setPixmap(pix);
+    picLabel->setScaledContents(true);
+    picLabel->setFixedWidth(320);
+    picLabel->setFixedHeight(240);
+    ui->imagesLayout->addWidget(picLabel);
+
+    loadedImagesCount++;
+
     ui->imageDisplay->setPixmap(pix);
 }
 
