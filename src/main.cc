@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <iostream>
-#include "batchwindow.h"
 #include "mainwindow.h"
 
 

@@ -9,7 +9,6 @@
 // app
 #include "helpers.h"
 #include "webcam.h"
-#include "batchwindow.h"
 
 // cv
 #include "opencv2/opencv.hpp"
@@ -47,9 +46,13 @@ typedef map<string,FunctionPointer> FunctionMap;
 class MainWindow : public QMainWindow {
     Q_OBJECT
     Mat curImage;
+
+    vector<Mat> loadedImages;
+
     QScopedPointer<Ui::MainWindow> ui;
     FunctionMap	operationsMap;
     QStringList List;
+    QList<QUrl> urls;
 
     void static equalize(Mat & image);
     void static lines(Mat & image);
@@ -59,15 +62,11 @@ class MainWindow : public QMainWindow {
     void static resizedownup(Mat & image);
     void static adaptiveBilateralFilter(Mat & image);
 
-    int loadedImagesCount = 0;
-
     string  getSelectedOperation();
 
 public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
-
-//    void drawImage(Mat image);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e);
@@ -76,23 +75,19 @@ protected:
 private:
     QStringListModel *operationsModel;
 
+    void redrawImages();
+    void loadImage(string filename);
 
-    void redrawImage();
     void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
-    void loadLocalImage(QString fileName);
-    batchWindow *batchWin;
 
-    bool thresholdWindow = false;
-    bool squaresWindow = false;
-    bool linesWindow = false;
-    bool equalizedWindow = false;
+
 
 private slots:
-    void loadImage();
-    void saveImage();
+    void openImage();
     void showWebcam();
-    void showBatchWindow();
+    void clearImages();
     void executeOperation();
+    void reloadImages();
 };
 
 

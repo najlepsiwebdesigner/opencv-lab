@@ -26,11 +26,11 @@ MainWindow::MainWindow(QWidget *parent)
     QModelIndex initialCellIndex = operationsModel->index(0);
     ui->operationsList->setCurrentIndex(initialCellIndex);
 
-    connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
-    connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
+    connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(openImage()));
     connect(ui->showWebcam, SIGNAL(clicked()), this, SLOT(showWebcam()));
-    connect(ui->batchWindow, SIGNAL(clicked()), this, SLOT(showBatchWindow()));
     connect(ui->executeButton, SIGNAL(clicked()), this, SLOT(executeOperation()));
+    connect(ui->clearImages, SIGNAL(clicked()), this, SLOT(clearImages()));
+    connect(ui->reload, SIGNAL(clicked()), this, SLOT(reloadImages()));
 }
 
 MainWindow::~MainWindow(){}
@@ -40,35 +40,39 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
     ev->accept();
 }
 
-void MainWindow::dropEvent(QDropEvent *ev)
-{
-    QList<QUrl> urls = ev->mimeData()->urls();
+void MainWindow::dropEvent(QDropEvent *ev) {
+    urls = ev->mimeData()->urls();
     QString filename;
 
-    if (urls.length() == 1){
-        QUrl url = urls.first();
+    foreach(QUrl url, urls) {
         filename = QString(url.toString());
         filename.replace(QString("file://"), QString(""));
-
-        loadLocalImage(filename);
-    } else {
-        QMessageBox msgBox;
-        msgBox.setText("Only one file is supported for drag and drop loading!");
-        msgBox.exec();
-
-//        foreach(QUrl url, urls)
+        loadImage(filename.toStdString());
     }
+
+    redrawImages();
 }
 
-void MainWindow::showBatchWindow() {
-    // modal window approach
-    batchWindow window;
-    window.setModal(true);
-    window.exec();
+void MainWindow::loadImage(string filename) {
+    Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
+    cvtColor(src, src, CV_BGR2RGB);
+    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
+    fitImage(src, dst, 640, 480);
+    loadedImages.push_back(dst);
 }
 
+void MainWindow::reloadImages(){
+    QString filename;
 
+    foreach(QUrl url, urls) {
+        filename = QString(url.toString());
+        filename.replace(QString("file://"), QString(""));
+        loadImage(filename.toStdString());
+    }
 
+    redrawImages();
+    cout << "test" << endl;
+}
 
 
 void MainWindow::showWebcam() {
@@ -76,22 +80,32 @@ void MainWindow::showWebcam() {
     cam.showRGB();
 }
 
+void MainWindow::clearImages() {
+    loadedImages.clear();
 
-
-void MainWindow::saveImage(){
-    if (this->curImage.empty()) {
-        cout << "No image to save!" << endl;
-        return;
+    while(ui->imagesLayout->count() > 0){
+       QLayoutItem *item = ui->imagesLayout->takeAt(0);
+       delete item->widget();
+       delete item;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),".",tr("Images (*.png *.jpg)"));
-
-    if (fileName.length() < 1) return;
-
-    cvtColor(this->curImage, this->curImage, CV_BGR2RGB);
-    imwrite(fileName.toStdString(), this->curImage);
-    cout << "File saved!" << endl;
+    redrawImages();
 }
+
+//void MainWindow::saveImage(){
+//    if (this->curImage.empty()) {
+//        cout << "No image to save!" << endl;
+//        return;
+//    }
+
+//    QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),".",tr("Images (*.png *.jpg)"));
+
+//    if (fileName.length() < 1) return;
+
+//    cvtColor(this->curImage, this->curImage, CV_BGR2RGB);
+//    imwrite(fileName.toStdString(), this->curImage);
+//    cout << "File saved!" << endl;
+//}
 
 
 void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
@@ -115,43 +129,33 @@ void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHe
 }
 
 
-void MainWindow::loadImage(){
+
+
+
+
+
+void MainWindow::openImage(){
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
-    loadLocalImage(fileName);
+    loadImage(fileName.toStdString());
 }
 
 
-void MainWindow::loadLocalImage(QString fileName) {
-    if (fileName.length() < 1) return;
+void MainWindow::redrawImages() {
+    QPixmap pix;
 
-    cout << "Loaded image name: "<< fileName.toStdString() << endl;
-
-    // open image as CV image
-    Mat src = imread(fileName.toStdString(),CV_LOAD_IMAGE_COLOR);
-    cvtColor(src, src, CV_BGR2RGB);
-    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
-
-    fitImage(src, dst, 640, 480);
-
-    // display image
-    this->curImage = dst;
-    redrawImage();
+    for (int i = 0; i<loadedImages.size(); i=i+1){
+        for (int j = 0; j<1; j++){
+            QLabel *picLabel = new QLabel();
+            pix = QPixmap::fromImage(QImage((unsigned char*) loadedImages[i+j].data, loadedImages[i+j].cols, loadedImages[i+j].rows, QImage::Format_RGB888));
+            picLabel->setPixmap(pix);
+            picLabel->setFixedWidth(640);
+            picLabel->setFixedHeight(480);
+            ui->imagesLayout->addWidget(picLabel,i,j);
+        }
+    }
 }
 
-void MainWindow::redrawImage(){
-    Mat src = this->curImage;
-    // convert color models
-    QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
 
-    QLabel *picLabel = new QLabel();
-    picLabel->setPixmap(pix);
-    picLabel->setFixedWidth(640);
-    picLabel->setFixedHeight(480);
-    ui->imagesLayout->insertWidget(0,picLabel);
-    QScrollBar * bar = ui->scrollArea->verticalScrollBar();
-    bar->setSliderPosition(0);
-    loadedImagesCount++;
-}
 
 
 string MainWindow::getSelectedOperation() {
@@ -162,8 +166,8 @@ string MainWindow::getSelectedOperation() {
 
 
 void MainWindow::executeOperation() {
-    if (this->curImage.empty()) {
-        cout << "No image!" << endl;
+    if (this->loadedImages.size() < 1) {
+        cout << "No images to process!" << endl;
         return;
     }
 
@@ -172,13 +176,18 @@ void MainWindow::executeOperation() {
     FunctionMap::const_iterator call;
     call = operationsMap.find(functionName);
 
-    if (call != operationsMap.end())
-       (*call).second(this->curImage);
-    else
-       cout << "Unknown call requested" << endl;
+    for (int i = 0; i < loadedImages.size(); i++){
+        if (call != operationsMap.end())
+           (*call).second(loadedImages[i]);
+        else
+           cout << "Unknown call requested" << endl;
+    }
 
-    redrawImage();
+    redrawImages();
 }
+
+
+
 
 
 void MainWindow::equalize(Mat & image) {

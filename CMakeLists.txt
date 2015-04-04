@@ -29,8 +29,6 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 
 set(SOURCE_FILES
     src/main.cc
-    src/batchwindow.h
-    src/batchwindow.cpp
     src/mainwindow.h
     src/mainwindow.cc
     src/webcam.h
@@ -48,7 +46,6 @@ endif ()
 
 set(UI_FILES
     ui/mainwindow.ui
-    ui/batchwindow.ui
 )
 source_group("UI Files" FILES ${UI_FILES})
 
