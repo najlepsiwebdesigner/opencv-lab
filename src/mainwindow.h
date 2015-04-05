@@ -53,6 +53,7 @@ class MainWindow : public QMainWindow {
     FunctionMap	operationsMap;
     QStringList List;
     QList<QUrl> urls;
+    QList<QLabel *> imageLabels;
 
     void static equalize(Mat & image);
     void static lines(Mat & image);

@@ -62,6 +62,7 @@ void MainWindow::loadImage(string filename) {
 }
 
 void MainWindow::reloadImages(){
+    clearImages();
     QString filename;
 
     foreach(QUrl url, urls) {
@@ -141,6 +142,8 @@ void MainWindow::openImage(){
 
 
 void MainWindow::redrawImages() {
+
+    cout << loadedImages.size() << endl;
     QPixmap pix;
 
     for (int i = 0; i<loadedImages.size(); i=i+1){
@@ -151,8 +154,15 @@ void MainWindow::redrawImages() {
             picLabel->setFixedWidth(640);
             picLabel->setFixedHeight(480);
             ui->imagesLayout->addWidget(picLabel,i,j);
+            imageLabels << picLabel;
         }
     }
+
+//    QLabel *label;
+//    for (QLabel *label : imageLabels) {
+//        connect(label, SIGNAL(clicked()), this, SLOT(clearImages()));
+//    }
+
 }
 
 

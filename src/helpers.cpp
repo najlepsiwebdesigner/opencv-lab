@@ -236,32 +236,16 @@ void doLines(Mat & src, Mat & dst) {
     vector<Point> contours_approx;
     vector<Point> shape;
 //    cv::cvtColor(src,dst , CV_GRAY2RGB);
-    cv::Canny(src, dst, 1, 1, 3);
+    cv::Canny(src, dst, 1, 1, 3, true);
 
     dilate( dst, dst, Mat(Size(1,1), CV_8UC1));
-//    findContours( src, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
 
-//    cv::cvtColor(src, dst, CV_GRAY2RGB);
-
-//    for( int i = 0; i< contours.size(); i++ )
-//    {
-//        //  Find the area of contour
-//        double a=contourArea( contours[i],false);
-//        if(a>largest_area){
-//           largest_area=a;
-//           largest_contour_index=i;
-//           cout << "Largest area : " << a << endl;
-//        }
-
-
-//    }
-//    drawContours( dst, contours,largest_contour_index, Scalar ( 0, 255,0), 1,8,hierarchy);
-
+    findContours( src, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dst, lines, 1, CV_PI/360, 100, 20, 10 );
+    cv::HoughLinesP(dst, lines, 1, CV_PI/720,80, 80, 40 );
     std::sort(lines.begin(), lines.end(), sortByLength);
-    filterLines(lines);
+//    filterLines(lines);
     cv::cvtColor(dst,dst , CV_GRAY2RGB);
 
 //    if (lines.size() < 100){
@@ -275,6 +259,32 @@ void doLines(Mat & src, Mat & dst) {
             lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
             cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0));
         }
+
+
+//        cv::cvtColor(src, dst, CV_GRAY2RGB);
+
+//        for( int i = 0; i< contours.size(); i++ )
+//        {
+//            //  Find the area of contour
+//            double a=contourArea( contours[i],false);
+
+//            vector<Point> approx;
+//            approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
+
+//            if(a>largest_area && approx.size() == 4 &&
+//               fabs(contourArea(Mat(approx))) > 1000 &&
+//               isContourConvex(Mat(approx)))
+//            {
+//               largest_area=a;
+//               largest_contour_index=i;
+//               cout << "Largest area : " << a << endl;
+//            }
+
+
+//        }
+//        drawContours( dst, contours,largest_contour_index, Scalar ( 0, 255,0), 1,8,hierarchy);
+
+
 
 
         //compute corners
@@ -322,6 +332,8 @@ void doLines(Mat & src, Mat & dst) {
         sortCorners(corners, center);
         std::cout << "The corners were not sorted correctly!" << std::endl;
         cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
+
+
 //    }
 }
 
