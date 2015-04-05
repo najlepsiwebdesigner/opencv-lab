@@ -62,6 +62,7 @@ class MainWindow : public QMainWindow {
     void static hsv(Mat & src);
     void static resizedownup(Mat & image);
     void static adaptiveBilateralFilter(Mat & image);
+    void static kMeans(Mat & src);
 
     string  getSelectedOperation();
 
