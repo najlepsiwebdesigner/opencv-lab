@@ -14,6 +14,9 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
+// boost
+#include <boost/filesystem.hpp>
+
 // qt
 #include <QMainWindow>
 #include <QScopedPointer>
@@ -29,9 +32,11 @@
 #include <QModelIndex>
 #include <QScrollBar>
 #include <QLabel>
+#include <QMessageBox>
 
 using namespace cv;
 using namespace std;
+using namespace boost::filesystem;
 
 namespace Ui
 {
@@ -57,12 +62,14 @@ class MainWindow : public QMainWindow {
 
     void static equalize(Mat & image);
     void static lines(Mat & image);
-    void static threshold(Mat & image);
+    void static thresholdGray(Mat & image);
+    void static thresholdBinary(Mat & image);
     void static squares(Mat & image);
     void static hsv(Mat & src);
     void static resizedownup(Mat & image);
     void static adaptiveBilateralFilter(Mat & image);
     void static kMeans(Mat & src);
+    void static sobel(Mat & src);
 
     string  getSelectedOperation();
 

@@ -17,8 +17,6 @@ public:
     Webcam();
     ~Webcam();
     void showRGB();
-    void threshold(Mat & src, Mat & dst);
-    void contours(Mat & src, Mat & dst);
 };
 
 #endif // WEBCAM_H

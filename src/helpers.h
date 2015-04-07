@@ -24,8 +24,6 @@ double vectorLength(cv::Point a, cv::Point b);
 bool sortByLength(const cv::Vec4i &lineA, const cv::Vec4i &lineB);
 
 
-Mat equalizeIntensity(const Mat& inputImage);
 
 
-void doLines(Mat & src, Mat & dst);
 #endif // HELPERS

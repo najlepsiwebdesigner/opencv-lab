@@ -10,23 +10,27 @@ MainWindow::MainWindow(QWidget *parent)
     setAcceptDrops(true);
     ui->setupUi(this);
 
-    List << "threshold"
+    List << "lines"
+         << "thresholdGray"
+         << "thresholdBinary"
          << "equalize"
          << "squares"
-         << "lines"
          << "HSV"
          << "resizeDownUp"
          << "adaptive bilateral"
-         << "kMeans";
+         << "kMeans"
+         << "Sobel";
 
     operationsMap.insert(FunctionMap::value_type("equalize",MainWindow::equalize));
     operationsMap.insert(FunctionMap::value_type("lines",MainWindow::lines));
-    operationsMap.insert(FunctionMap::value_type("threshold",MainWindow::threshold));
+    operationsMap.insert(FunctionMap::value_type("thresholdGray",MainWindow::thresholdGray));
+    operationsMap.insert(FunctionMap::value_type("thresholdBinary",MainWindow::thresholdBinary));
     operationsMap.insert(FunctionMap::value_type("squares",MainWindow::squares));
     operationsMap.insert(FunctionMap::value_type("HSV",MainWindow::hsv));
     operationsMap.insert(FunctionMap::value_type("resizeDownUp",MainWindow::resizedownup));
     operationsMap.insert(FunctionMap::value_type("adaptive bilateral",MainWindow::adaptiveBilateralFilter));
     operationsMap.insert(FunctionMap::value_type("kMeans",MainWindow::kMeans));
+    operationsMap.insert(FunctionMap::value_type("Sobel",MainWindow::sobel));
 
     operationsModel = new QStringListModel(this);
     operationsModel->setStringList(List);
@@ -62,11 +66,13 @@ void MainWindow::dropEvent(QDropEvent *ev) {
 }
 
 void MainWindow::loadImage(string filename) {
-    Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
-    cvtColor(src, src, CV_BGR2RGB);
-    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
-    fitImage(src, dst, 640, 480);
-    loadedImages.push_back(dst);
+    if (exists(filename)){
+        Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
+        cvtColor(src, src, CV_BGR2RGB);
+        Mat dst(Size(640,480),CV_8UC3,Scalar(0));
+        fitImage(src, dst, 640, 480);
+        loadedImages.push_back(dst);
+    }
 }
 
 void MainWindow::reloadImages(){
@@ -80,7 +86,6 @@ void MainWindow::reloadImages(){
     }
 
     redrawImages();
-    cout << "test" << endl;
 }
 
 
@@ -150,8 +155,6 @@ void MainWindow::openImage(){
 
 
 void MainWindow::redrawImages() {
-
-    cout << loadedImages.size() << endl;
     QPixmap pix;
 
     for (int i = 0; i<loadedImages.size(); i=i+1){
@@ -185,7 +188,9 @@ string MainWindow::getSelectedOperation() {
 
 void MainWindow::executeOperation() {
     if (this->loadedImages.size() < 1) {
-        cout << "No images to process!" << endl;
+        QMessageBox msgBox;
+        msgBox.setText("No images to process!");
+        msgBox.exec();
         return;
     }
 
@@ -195,10 +200,16 @@ void MainWindow::executeOperation() {
     call = operationsMap.find(functionName);
 
     for (int i = 0; i < loadedImages.size(); i++){
-        if (call != operationsMap.end())
+        if (call != operationsMap.end()) {
            (*call).second(loadedImages[i]);
-        else
-           cout << "Unknown call requested" << endl;
+        }
+        else {
+            QMessageBox msgBox;
+            msgBox.setText("Unknown call requested");
+            msgBox.exec();
+            redrawImages();
+            return;
+        }
     }
 
     redrawImages();
@@ -207,33 +218,136 @@ void MainWindow::executeOperation() {
 
 
 
-
 void MainWindow::equalize(Mat & image) {
-    image = equalizeIntensity(image);
+    Mat ycrcb;
+    cvtColor(image,ycrcb,CV_BGR2YCrCb);
+    vector<Mat> channels;
+    split(ycrcb,channels);
+    equalizeHist(channels[0], channels[0]);
+    Mat result;
+    merge(channels,ycrcb);
+    cvtColor(ycrcb,result,CV_YCrCb2BGR);
+
+    image = result;
 }
 
 void MainWindow::lines(Mat & image) {
-    Mat src = image;
+    Mat src = image.clone();
     Mat dst;
-    cv::cvtColor(src,dst , CV_BGR2GRAY);
+    cv::cvtColor(src,dst , CV_RGB2GRAY);
     cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
-//    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-//    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
 
-    doLines(dst,src);
-//    cv::cvtColor(src,image, CV_GRAY2RGB);
-    image = src;
+//    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
+    cv::Canny(dst, dst, 1, 1, 3, true);
+    dilate( dst, dst, Mat(Size(1,1), CV_8UC1));
+
+    std::vector<cv::Vec4i> lines;
+    cv::HoughLinesP(dst, lines, 1, CV_PI/720,80, 80, 40);
+    std::sort(lines.begin(), lines.end(), sortByLength);
+//    filterLines(lines);
+    cv::cvtColor(dst,dst , CV_GRAY2RGB);
+
+    // Expand and draw the lines
+    for (int i = 0; i < lines.size(); i++)
+    {
+        cv::Vec4i v = lines[i];
+        lines[i][0] = 0;
+        lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
+        lines[i][2] = dst.cols;
+        lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
+        cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0));
+    }
+
+
+    //compute intersections and store them as corners
+    std::vector<cv::Point2f> corners;
+    for (int i = 0; i < lines.size(); i++)
+    {
+        for (int j = i+1; j < lines.size(); j++)
+        {
+            cv::Vec4i v = lines[i];
+            Point intersection;
+
+            bool has_intersection = getIntersectionPoint(
+                Point(lines[i][0],lines[i][1]),
+                Point(lines[i][2], lines[i][3]),
+                Point(lines[j][0],lines[j][1]),
+                Point(lines[j][2], lines[j][3]),
+                intersection);
+
+            if (has_intersection
+                && intersection.x > 0
+                && intersection.y > 0
+                && intersection.x < dst.cols
+                && intersection.y < dst.rows){
+                corners.push_back(intersection);
+            }
+
+            cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
+        }
+    }
+
+    // draw lines around image
+    std::vector<cv::Vec4i> myLines;
+
+    cv::Vec4i leftLine;leftLine[0] = 0;leftLine[1] = 0;leftLine[2] = 0;leftLine[3] = dst.rows;
+    myLines.push_back(leftLine);
+    cv::Vec4i rightLine;
+    rightLine[0] = dst.cols;rightLine[1] = 0;rightLine[2] = dst.cols;rightLine[3] = dst.rows;
+    myLines.push_back(rightLine);
+    cv::Vec4i topLine;
+    topLine[0] = dst.cols;topLine[1] = 0;topLine[2] = 0;topLine[3] = 0;
+    myLines.push_back(topLine);
+    cv::Vec4i bottomLine;
+    bottomLine[0] = dst.cols;bottomLine[1] = dst.rows;bottomLine[2] = 0;bottomLine[3] = dst.rows;
+    myLines.push_back(bottomLine);
+
+    for (int i = 0; i < myLines.size(); i++)
+    {
+        cv::line(dst, cv::Point(myLines[i][0], myLines[i][1]), cv::Point(myLines[i][2], myLines[i][3]), CV_RGB(0, 255,0),5);
+    }
+
+
+    // compute and draw center of mass
+    cv::Point2f center(0,0);
+
+    for (int i = 0; i < corners.size(); i++)
+        center += corners[i];
+    center *= (1. / corners.size());
+
+    sortCorners(corners, center);
+    cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
+
+    image = dst;
 }
 
-void MainWindow::threshold(Mat & image) {
+
+
+
+
+
+
+
+
+
+void MainWindow::thresholdGray(Mat & image) {
     Mat dst;
-    cv::cvtColor(image,dst, CV_RGB2GRAY);
+    cv::cvtColor(image,dst , CV_BGR2GRAY);
     cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
-//    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-//    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
-    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
+    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
+//    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
     cv::cvtColor(dst,image, CV_GRAY2RGB);
 }
+
+void MainWindow::thresholdBinary(Mat & image) {
+    Mat dst;
+    cv::cvtColor(image,image, CV_BGR2GRAY);
+    cv::threshold(image,image,0,255,THRESH_BINARY + CV_THRESH_OTSU);
+    cv::cvtColor(image,image, CV_GRAY2RGB);
+}
+
+
+
 
 void MainWindow::squares(Mat & image) {
     Mat src = image;
@@ -316,4 +430,33 @@ void MainWindow::kMeans(Mat &src) {
        cv::Mat binary;
        cv::Canny(new_image, binary, 30, 90);
        cv::cvtColor(binary,src, CV_GRAY2RGB);
+}
+
+
+void MainWindow::sobel(Mat & src) {
+    GaussianBlur( src, src, Size(3,3), 0, 0, BORDER_DEFAULT );
+    Mat grad, src_gray;
+    int scale = 1;
+    int delta = 0;
+    int ddepth = CV_16S;
+    /// Convert it to gray
+    cvtColor( src, src_gray, COLOR_RGB2GRAY );
+
+    /// Generate grad_x and grad_y
+    Mat grad_x, grad_y;
+    Mat abs_grad_x, abs_grad_y;
+
+    /// Gradient X
+    //Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
+    Sobel( src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT );
+    convertScaleAbs( grad_x, abs_grad_x );
+
+    /// Gradient Y
+    //Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
+    Sobel( src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT );
+    convertScaleAbs( grad_y, abs_grad_y );
+
+    /// Total Gradient (approximate)
+    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
+    cvtColor( grad, src, COLOR_GRAY2RGB );
 }

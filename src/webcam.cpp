@@ -40,30 +40,22 @@ void Webcam::showRGB() {
         MyFreenectDevice& device = freenect.createDevice<MyFreenectDevice>(0);
 
         namedWindow("rgb",CV_WINDOW_AUTOSIZE);
-        namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
+/*        namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
         namedWindow("processed",CV_WINDOW_AUTOSIZE);
-        namedWindow("squares",CV_WINDOW_AUTOSIZE);
+        namedWindow("squares",CV_WINDOW_AUTOSIZE/);*/
 
         device.startVideo();
         while (!die) {
             device.getVideo(rgbMat);
-
-            findSquares(rgbMat, squares);
-            cv::imshow("thresholded", rgbMat);
-
-    //        threshold(rgbMat, thresholdedMat);
-    //        contours(thresholdedMat, contoursMat);
-    //        cv::imshow("processed", contoursMat);
-    //        cv::imshow("rgb", rgbMat);
-    //        drawSquares(rgbMat, squares);
-
+//            findSquares(rgbMat, squares);
+            cv::imshow("rgb", rgbMat);
 
             char k = cvWaitKey(5);
             if( k == 27 ){
                 cvDestroyWindow("rgb");
-                cvDestroyWindow("processed");
-                cvDestroyWindow("thresholded");
-                cvDestroyWindow("squares");
+//                cvDestroyWindow("processed");
+//                cvDestroyWindow("thresholded");
+//                cvDestroyWindow("squares");
                 break;
             }
             if( k == 8 ) {
