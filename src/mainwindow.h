@@ -7,7 +7,6 @@
 #include <map>
 
 // app
-#include "helpers.h"
 #include "webcam.h"
 #include "imageoperations.h"
 

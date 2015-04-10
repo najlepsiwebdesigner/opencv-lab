@@ -3,7 +3,6 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "mainwindow.h"
-#include "helpers.h"
 
 using namespace cv;
 using namespace std;

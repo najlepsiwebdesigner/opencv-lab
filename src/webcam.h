@@ -6,8 +6,8 @@
 #include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include "helpers.h"
 #include "imageoperations.h"
+#include "myfreenectdevice.h"
 
 using namespace cv;
 
