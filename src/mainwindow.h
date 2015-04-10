@@ -9,6 +9,7 @@
 // app
 #include "helpers.h"
 #include "webcam.h"
+#include "imageoperations.h"
 
 // cv
 #include "opencv2/opencv.hpp"
@@ -60,17 +61,6 @@ class MainWindow : public QMainWindow {
     QList<QUrl> urls;
     QList<QLabel *> imageLabels;
 
-    void static equalize(Mat & image);
-    void static lines(Mat & image);
-    void static thresholdGray(Mat & image);
-    void static thresholdBinary(Mat & image);
-    void static squares(Mat & image);
-    void static hsv(Mat & src);
-    void static resizedownup(Mat & image);
-    void static adaptiveBilateralFilter(Mat & image);
-    void static kMeans(Mat & src);
-    void static sobel(Mat & src);
-
     string  getSelectedOperation();
 
 public:
@@ -94,6 +84,7 @@ private:
 private slots:
     void openImage();
     void showWebcam();
+    void showKinect();
     void clearImages();
     void executeOperation();
     void reloadImages();

@@ -68,13 +68,20 @@
      <rect>
       <x>600</x>
       <y>690</y>
-      <width>101</width>
-      <height>61</height>
+      <width>115</width>
+      <height>66</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <widget class="QPushButton" name="showWebcam">
+       <property name="text">
+        <string>Webcam</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="showKinect">
        <property name="autoFillBackground">
         <bool>false</bool>
        </property>

@@ -6,8 +6,8 @@
 #include <iostream>
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include "mainwindow.h"
 #include "helpers.h"
+#include "imageoperations.h"
 
 using namespace cv;
 
@@ -17,6 +17,7 @@ public:
     Webcam();
     ~Webcam();
     void showRGB();
+    void showKinectRGB();
 };
 
 #endif // WEBCAM_H
