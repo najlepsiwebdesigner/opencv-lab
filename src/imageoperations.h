@@ -25,7 +25,8 @@ public:
     void static sobel(Mat & src);
 
     double static cross(Point v1,Point v2);
-    bool static getIntersectionPoint(Point a1, Point a2, Point b1, Point b2, Point & intPnt);
+    bool static getIntersectionPoint(Point a1, Point a2, Point b1, Point b2, Point2f &intPnt);
+    Point2f static computeIntersect(cv::Vec4i a, cv::Vec4i b);
     double static angle( Point pt1, Point pt2, Point pt0 );
 
     void static findSquares( const Mat& image, vector<vector<Point> >& squares );
@@ -35,6 +36,10 @@ public:
     void static sortCorners(std::vector<cv::Point2f>& corners,cv::Point2f center);
     double static vectorLength(cv::Point a, cv::Point b);
     bool static sortByLength(const cv::Vec4i &lineA, const cv::Vec4i &lineB);
+
+    void static fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
 };
+
+
 
 #endif // IMAGEOPERATIONS_H

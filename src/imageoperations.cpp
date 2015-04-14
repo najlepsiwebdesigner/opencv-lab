@@ -17,7 +17,7 @@ double ImageOperations::cross(Point v1,Point v2){
 }
 
 
-bool ImageOperations::getIntersectionPoint(Point a1, Point a2, Point b1, Point b2, Point & intPnt){
+bool ImageOperations::getIntersectionPoint(Point a1, Point a2, Point b1, Point b2, Point2f & intPnt){
     Point p = a1;
     Point q = b1;
     Point r(a2-a1);
@@ -29,6 +29,23 @@ bool ImageOperations::getIntersectionPoint(Point a1, Point a2, Point b1, Point b
 
     intPnt = p + t*r;
     return true;
+}
+
+
+Point2f ImageOperations::computeIntersect(cv::Vec4i a, cv::Vec4i b)
+{
+    int x1 = a[0], y1 = a[1], x2 = a[2], y2 = a[3], x3 = b[0], y3 = b[1], x4 = b[2], y4 = b[3];
+    float denom;
+
+    if (float d = ((float)(x1 - x2) * (y3 - y4)) - ((y1 - y2) * (x3 - x4)))
+    {
+        cv::Point2f pt;
+        pt.x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
+        pt.y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
+        return pt;
+    }
+    else
+        return cv::Point2f(-1, -1);
 }
 
 
@@ -49,14 +66,14 @@ double ImageOperations::angle( Point pt1, Point pt2, Point pt0 )
 // the sequence is stored in the specified memory storage
 void ImageOperations::findSquares( const Mat& image, vector<vector<Point> >& squares )
 {
-    int thresh = 50, N = 11;
+    int thresh = 80, N = 11;
     squares.clear();
 
     Mat pyr, timg, gray0(image.size(), CV_8U), gray;
-
+    image.copyTo(timg);
     // down-scale and upscale the image to filter out the noise
-    pyrDown(image, pyr, Size(image.cols/2, image.rows/2));
-    pyrUp(pyr, timg, image.size());
+//    pyrDown(image, pyr, Size(image.cols/2, image.rows/2));
+//    pyrUp(pyr, timg, image.size());
     vector<vector<Point> > contours;
 
     // find squares in every color plane of the image
@@ -239,6 +256,32 @@ bool ImageOperations::sortByLength(const cv::Vec4i &lineA, const cv::Vec4i &line
 }
 
 
+void ImageOperations::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
+    int srcWidth = src.cols;
+    int srcHeight = src.rows;
+
+    float srcRatio = (float) srcWidth / (float) srcHeight;
+
+    float widthRatio = destWidth / srcWidth;
+    float heightRatio = destHeight / srcHeight;
+
+    float newWidth = 0;
+    float newHeight = 0;
+
+    if (srcWidth > srcHeight) {
+        destHeight = destWidth / srcRatio;
+    } else {
+        destWidth = destHeight * srcRatio;
+    }
+    cv::resize(src, dst,Size((int)round(destWidth), (int)round(destHeight)),0,0);
+}
+
+
+
+
+
+
+
 
 
 
@@ -270,6 +313,7 @@ void ImageOperations::lines(Mat & image) {
     std::sort(lines.begin(), lines.end(), sortByLength);
 //    filterLines(lines);
     cv::cvtColor(dst,dst , CV_GRAY2RGB);
+    lines.resize(4);
 
     // Expand and draw the lines
     for (int i = 0; i < lines.size(); i++)
@@ -279,58 +323,75 @@ void ImageOperations::lines(Mat & image) {
         lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
         lines[i][2] = dst.cols;
         lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
-        cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0));
+        cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0), 1);
     }
 
 
-    //compute intersections and store them as corners
     std::vector<cv::Point2f> corners;
     for (int i = 0; i < lines.size(); i++)
-    {
-        for (int j = i+1; j < lines.size(); j++)
         {
-            cv::Vec4i v = lines[i];
-            Point intersection;
+            for (int j = i+1; j < lines.size(); j++)
+            {
+                cv::Vec4i v = lines[i];
+                Point2f intersection;
 
-            bool has_intersection = getIntersectionPoint(
-                Point(lines[i][0],lines[i][1]),
-                Point(lines[i][2], lines[i][3]),
-                Point(lines[j][0],lines[j][1]),
-                Point(lines[j][2], lines[j][3]),
-                intersection);
+                bool has_intersection = getIntersectionPoint(
+                    Point(lines[i][0],lines[i][1]),
+                    Point(lines[i][2], lines[i][3]),
+                    Point(lines[j][0],lines[j][1]),
+                    Point(lines[j][2], lines[j][3]),
+                    intersection);
 
-            if (has_intersection
-                && intersection.x > 0
-                && intersection.y > 0
-                && intersection.x < dst.cols
-                && intersection.y < dst.rows){
-                corners.push_back(intersection);
+                if (has_intersection
+                    && intersection.x > 0
+                    && intersection.y > 0
+                    && intersection.x < dst.cols
+                    && intersection.y < dst.rows){
+                    corners.push_back(intersection);
+                }
+
+                cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
             }
-
-            cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
         }
+
+    if (corners.size() < 1) {
+        return;
     }
 
-    // draw lines around image
-    std::vector<cv::Vec4i> myLines;
+    std::vector<cv::Point2f> approx;
+    cv::approxPolyDP(cv::Mat(corners), approx, cv::arcLength(cv::Mat(corners), true) * 0.03, true);
 
-    cv::Vec4i leftLine;leftLine[0] = 0;leftLine[1] = 0;leftLine[2] = 0;leftLine[3] = dst.rows;
-    myLines.push_back(leftLine);
-    cv::Vec4i rightLine;
-    rightLine[0] = dst.cols;rightLine[1] = 0;rightLine[2] = dst.cols;rightLine[3] = dst.rows;
-    myLines.push_back(rightLine);
-    cv::Vec4i topLine;
-    topLine[0] = dst.cols;topLine[1] = 0;topLine[2] = 0;topLine[3] = 0;
-    myLines.push_back(topLine);
-    cv::Vec4i bottomLine;
-    bottomLine[0] = dst.cols;bottomLine[1] = dst.rows;bottomLine[2] = 0;bottomLine[3] = dst.rows;
-    myLines.push_back(bottomLine);
-
-    for (int i = 0; i < myLines.size(); i++)
+//    cout << approx.size() << endl;
+    if (approx.size() != 4)
     {
-        cv::line(dst, cv::Point(myLines[i][0], myLines[i][1]), cv::Point(myLines[i][2], myLines[i][3]), CV_RGB(0, 255,0),5);
+        std::cout << "The object is not quadrilateral!" << std::endl;
+        return;
     }
 
+
+//    // draw lines around image
+//    std::vector<cv::Vec4i> myLines;
+
+//    cv::Vec4i leftLine;leftLine[0] = 0;leftLine[1] = 0;leftLine[2] = 0;leftLine[3] = dst.rows;
+//    myLines.push_back(leftLine);
+//    cv::Vec4i rightLine;
+//    rightLine[0] = dst.cols;rightLine[1] = 0;rightLine[2] = dst.cols;rightLine[3] = dst.rows;
+//    myLines.push_back(rightLine);
+//    cv::Vec4i topLine;
+//    topLine[0] = dst.cols;topLine[1] = 0;topLine[2] = 0;topLine[3] = 0;
+//    myLines.push_back(topLine);
+//    cv::Vec4i bottomLine;
+//    bottomLine[0] = dst.cols;bottomLine[1] = dst.rows;bottomLine[2] = 0;bottomLine[3] = dst.rows;
+//    myLines.push_back(bottomLine);
+
+
+
+
+
+//    for (int i = 0; i < myLines.size(); i++)
+//    {
+//        cv::line(dst, cv::Point(myLines[i][0], myLines[i][1]), cv::Point(myLines[i][2], myLines[i][3]), CV_RGB(0, 255,0),5);
+//    }
 
     // compute and draw center of mass
     cv::Point2f center(0,0);

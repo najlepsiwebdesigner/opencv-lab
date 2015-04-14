@@ -101,7 +101,7 @@
       <x>590</x>
       <y>530</y>
       <width>115</width>
-      <height>100</height>
+      <height>134</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -109,6 +109,13 @@
       <widget class="QPushButton" name="loadPicture">
        <property name="text">
         <string>load </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="savePictures">
+       <property name="text">
+        <string>save</string>
        </property>
       </widget>
      </item>

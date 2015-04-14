@@ -4,6 +4,8 @@
 using namespace std;
 using namespace cv;
 
+
+
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -44,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->executeButton, SIGNAL(clicked()), this, SLOT(executeOperation()));
     connect(ui->clearImages, SIGNAL(clicked()), this, SLOT(clearImages()));
     connect(ui->reload, SIGNAL(clicked()), this, SLOT(reloadImages()));
+    connect(ui->savePictures, SIGNAL(clicked()), this, SLOT(saveImages()));
 }
 
 MainWindow::~MainWindow(){}
@@ -71,7 +74,7 @@ void MainWindow::loadImage(string filename) {
         Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
         cvtColor(src, src, CV_BGR2RGB);
         Mat dst(Size(640,480),CV_8UC3,Scalar(0));
-        fitImage(src, dst, 640, 480);
+        ImageOperations::fitImage(src, dst, 640, 480);
         loadedImages.push_back(dst);
     }
 }
@@ -116,46 +119,13 @@ void MainWindow::clearImages() {
     redrawImages();
 }
 
-//void MainWindow::saveImage(){
-//    if (this->curImage.empty()) {
-//        cout << "No image to save!" << endl;
-//        return;
-//    }
+void MainWindow::saveImage(string fileName, const Mat & image){
+    if (fileName.length() < 1) return;
 
-//    QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),".",tr("Images (*.png *.jpg)"));
-
-//    if (fileName.length() < 1) return;
-
-//    cvtColor(this->curImage, this->curImage, CV_BGR2RGB);
-//    imwrite(fileName.toStdString(), this->curImage);
-//    cout << "File saved!" << endl;
-//}
-
-
-void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
-    int srcWidth = src.cols;
-    int srcHeight = src.rows;
-
-    float srcRatio = (float) srcWidth / (float) srcHeight;
-
-    float widthRatio = destWidth / srcWidth;
-    float heightRatio = destHeight / srcHeight;
-
-    float newWidth = 0;
-    float newHeight = 0;
-
-    if (srcWidth > srcHeight) {
-        destHeight = destWidth / srcRatio;
-    } else {
-        destWidth = destHeight * srcRatio;
-    }
-    cv::resize(src, dst,Size((int)round(destWidth), (int)round(destHeight)),0,0);
+    cvtColor(image, image, CV_BGR2RGB);
+    imwrite(fileName, image);
+    cout << "File saved!" << endl;
 }
-
-
-
-
-
 
 
 void MainWindow::openImage(){
@@ -186,7 +156,31 @@ void MainWindow::redrawImages() {
 
 }
 
+void MainWindow::saveImages() {
+    if (this->loadedImages.size() < 1) {
+        QMessageBox msgBox;
+        msgBox.setText("No images to process!");
+        msgBox.exec();
+        return;
+    }
 
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                "",
+                                                QFileDialog::ShowDirsOnly
+                                                | QFileDialog::DontResolveSymlinks);
+    QString filename;
+    for (int i =0; i < urls.size(); i++) {
+        filename = QString(urls[i].toString());
+        filename.replace(QString("file://"), QString(""));
+
+        string name = filename.toStdString();
+        unsigned found = name.find_last_of("/\\");
+        name = name.substr(found+1);
+
+        name = dir.toStdString() + '/' + name ;
+        saveImage(name, this->loadedImages[i]);
+    }
+}
 
 
 string MainWindow::getSelectedOperation() {

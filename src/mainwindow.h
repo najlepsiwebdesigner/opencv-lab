@@ -75,8 +75,8 @@ private:
 
     void redrawImages();
     void loadImage(string filename);
+    void saveImage(string fileName, const Mat &image);
 
-    void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
 
 
 
@@ -87,6 +87,7 @@ private slots:
     void clearImages();
     void executeOperation();
     void reloadImages();
+    void saveImages();
 };
 
 

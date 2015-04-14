@@ -4,10 +4,10 @@
 using namespace std;
 using namespace cv;
 
-Webcam::Webcam()
-{
+Webcam::Webcam() {
 
 }
+
 
 Webcam::~Webcam()
 {
@@ -78,7 +78,11 @@ void Webcam::showKinectRGB() {
 
 void Webcam::showRGB() {
     namedWindow("Camera_Output", 1);    //Create window
-    VideoCapture capture = VideoCapture(CV_CAP_ANY);  //Capture using any camera connected to your system
+    int cap = CV_CAP_ANY;
+    if (cap == 0){
+        cap = 1;
+    }
+    VideoCapture capture = VideoCapture(cap);  //Capture using any camera connected to your system
     char key;
 
     Mat frame;
@@ -86,6 +90,13 @@ void Webcam::showRGB() {
     while(1){ //Create infinte loop for live streaming
 
         capture.read(frame); //Create image frames from capture
+        ImageOperations::fitImage(frame,frame,640,480);
+        ImageOperations::resizedownup(frame);
+        ImageOperations::thresholdGray(frame);
+        ImageOperations::thresholdBinary(frame);
+        ImageOperations::lines(frame);
+
+
         imshow("Camera_Output", frame);   //Show image frames on created window
         key = cvWaitKey(10);     //Capture Keyboard stroke
         if (char(key) == 27){
