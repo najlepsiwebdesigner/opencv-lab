@@ -4,21 +4,35 @@
 using namespace std;
 using namespace cv;
 
+
+
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     setAcceptDrops(true);
     ui->setupUi(this);
 
-    List << "threshold" << "equalize" << "squares" << "lines" << "HSV" << "resizeDownUp" << "adaptive bilateral";
+    List << "lines"
+         << "thresholdGray"
+         << "thresholdBinary"
+         << "equalize"
+         << "squares"
+         << "HSV"
+         << "resizeDownUp"
+         << "adaptive bilateral"
+         << "kMeans"
+         << "Sobel";
 
-    operationsMap.insert(FunctionMap::value_type("equalize",MainWindow::equalize));
-    operationsMap.insert(FunctionMap::value_type("lines",MainWindow::lines));
-    operationsMap.insert(FunctionMap::value_type("threshold",MainWindow::threshold));
-    operationsMap.insert(FunctionMap::value_type("squares",MainWindow::squares));
-    operationsMap.insert(FunctionMap::value_type("HSV",MainWindow::hsv));
-    operationsMap.insert(FunctionMap::value_type("resizeDownUp",MainWindow::resizedownup));
-    operationsMap.insert(FunctionMap::value_type("adaptive bilateral",MainWindow::adaptiveBilateralFilter));
+    operationsMap.insert(FunctionMap::value_type("equalize",ImageOperations::equalize));
+    operationsMap.insert(FunctionMap::value_type("lines",ImageOperations::lines));
+    operationsMap.insert(FunctionMap::value_type("thresholdGray",ImageOperations::thresholdGray));
+    operationsMap.insert(FunctionMap::value_type("thresholdBinary",ImageOperations::thresholdBinary));
+    operationsMap.insert(FunctionMap::value_type("squares",ImageOperations::squares));
+    operationsMap.insert(FunctionMap::value_type("HSV",ImageOperations::hsv));
+    operationsMap.insert(FunctionMap::value_type("resizeDownUp",ImageOperations::resizedownup));
+    operationsMap.insert(FunctionMap::value_type("adaptive bilateral",ImageOperations::adaptiveBilateralFilter));
+    operationsMap.insert(FunctionMap::value_type("kMeans",ImageOperations::kMeans));
+    operationsMap.insert(FunctionMap::value_type("Sobel",ImageOperations::sobel));
 
     operationsModel = new QStringListModel(this);
     operationsModel->setStringList(List);
@@ -26,11 +40,13 @@ MainWindow::MainWindow(QWidget *parent)
     QModelIndex initialCellIndex = operationsModel->index(0);
     ui->operationsList->setCurrentIndex(initialCellIndex);
 
-    connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(loadImage()));
-    connect(ui->savePicture, SIGNAL(clicked()), this, SLOT(saveImage()));
+    connect(ui->loadPicture, SIGNAL(clicked()), this, SLOT(openImage()));
     connect(ui->showWebcam, SIGNAL(clicked()), this, SLOT(showWebcam()));
-    connect(ui->batchWindow, SIGNAL(clicked()), this, SLOT(showBatchWindow()));
+    connect(ui->showKinect, SIGNAL(clicked()), this, SLOT(showKinect()));
     connect(ui->executeButton, SIGNAL(clicked()), this, SLOT(executeOperation()));
+    connect(ui->clearImages, SIGNAL(clicked()), this, SLOT(clearImages()));
+    connect(ui->reload, SIGNAL(clicked()), this, SLOT(reloadImages()));
+    connect(ui->savePictures, SIGNAL(clicked()), this, SLOT(saveImages()));
 }
 
 MainWindow::~MainWindow(){}
@@ -40,35 +56,41 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
     ev->accept();
 }
 
-void MainWindow::dropEvent(QDropEvent *ev)
-{
-    QList<QUrl> urls = ev->mimeData()->urls();
+void MainWindow::dropEvent(QDropEvent *ev) {
+    urls = ev->mimeData()->urls();
     QString filename;
 
-    if (urls.length() == 1){
-        QUrl url = urls.first();
+    foreach(QUrl url, urls) {
         filename = QString(url.toString());
         filename.replace(QString("file://"), QString(""));
+        loadImage(filename.toStdString());
+    }
 
-        loadLocalImage(filename);
-    } else {
-        QMessageBox msgBox;
-        msgBox.setText("Only one file is supported for drag and drop loading!");
-        msgBox.exec();
+    redrawImages();
+}
 
-//        foreach(QUrl url, urls)
+void MainWindow::loadImage(string filename) {
+    if (exists(filename)){
+        Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
+        cvtColor(src, src, CV_BGR2RGB);
+        Mat dst(Size(640,480),CV_8UC3,Scalar(0));
+        ImageOperations::fitImage(src, dst, 640, 480);
+        loadedImages.push_back(dst);
     }
 }
 
-void MainWindow::showBatchWindow() {
-    // modal window approach
-    batchWindow window;
-    window.setModal(true);
-    window.exec();
+void MainWindow::reloadImages(){
+    clearImages();
+    QString filename;
+
+    foreach(QUrl url, urls) {
+        filename = QString(url.toString());
+        filename.replace(QString("file://"), QString(""));
+        loadImage(filename.toStdString());
+    }
+
+    redrawImages();
 }
-
-
-
 
 
 void MainWindow::showWebcam() {
@@ -78,77 +100,86 @@ void MainWindow::showWebcam() {
 
 
 
-void MainWindow::saveImage(){
-    if (this->curImage.empty()) {
-        cout << "No image to save!" << endl;
-        return;
+void MainWindow::showKinect() {
+    Webcam cam;
+    cam.showKinectRGB();
+}
+
+
+
+void MainWindow::clearImages() {
+    loadedImages.clear();
+
+    while(ui->imagesLayout->count() > 0){
+       QLayoutItem *item = ui->imagesLayout->takeAt(0);
+       delete item->widget();
+       delete item;
     }
 
-    QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),".",tr("Images (*.png *.jpg)"));
+    redrawImages();
+}
 
+void MainWindow::saveImage(string fileName, const Mat & image){
     if (fileName.length() < 1) return;
 
-    cvtColor(this->curImage, this->curImage, CV_BGR2RGB);
-    imwrite(fileName.toStdString(), this->curImage);
+    cvtColor(image, image, CV_BGR2RGB);
+    imwrite(fileName, image);
     cout << "File saved!" << endl;
 }
 
 
-void MainWindow::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
-    int srcWidth = src.cols;
-    int srcHeight = src.rows;
-
-    float srcRatio = (float) srcWidth / (float) srcHeight;
-
-    float widthRatio = destWidth / srcWidth;
-    float heightRatio = destHeight / srcHeight;
-
-    float newWidth = 0;
-    float newHeight = 0;
-
-    if (srcWidth > srcHeight) {
-        destHeight = destWidth / srcRatio;
-    } else {
-        destWidth = destHeight * srcRatio;
-    }
-    cv::resize(src, dst,Size((int)round(destWidth), (int)round(destHeight)),0,0);
-}
-
-
-void MainWindow::loadImage(){
+void MainWindow::openImage(){
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
-    loadLocalImage(fileName);
+    loadImage(fileName.toStdString());
 }
 
 
-void MainWindow::loadLocalImage(QString fileName) {
-    if (fileName.length() < 1) return;
+void MainWindow::redrawImages() {
+    QPixmap pix;
 
-    cout << "Loaded image name: "<< fileName.toStdString() << endl;
+    for (int i = 0; i<loadedImages.size(); i=i+1){
+        for (int j = 0; j<1; j++){
+            QLabel *picLabel = new QLabel();
+            pix = QPixmap::fromImage(QImage((unsigned char*) loadedImages[i+j].data, loadedImages[i+j].cols, loadedImages[i+j].rows, QImage::Format_RGB888));
+            picLabel->setPixmap(pix);
+            picLabel->setFixedWidth(640);
+            picLabel->setFixedHeight(480);
+            ui->imagesLayout->addWidget(picLabel,i,j);
+            imageLabels << picLabel;
+        }
+    }
 
-    // open image as CV image
-    Mat src = imread(fileName.toStdString(),CV_LOAD_IMAGE_COLOR);
-    cvtColor(src, src, CV_BGR2RGB);
-    Mat dst(Size(640,480),CV_8UC3,Scalar(0));
+//    QLabel *label;
+//    for (QLabel *label : imageLabels) {
+//        connect(label, SIGNAL(clicked()), this, SLOT(clearImages()));
+//    }
 
-    fitImage(src, dst, 640, 480);
-
-    // display image
-    this->curImage = dst;
-    redrawImage();
 }
 
-void MainWindow::drawImage(Mat src){
-    QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
-    ui->imageDisplay->setPixmap(pix);
-}
+void MainWindow::saveImages() {
+    if (this->loadedImages.size() < 1) {
+        QMessageBox msgBox;
+        msgBox.setText("No images to process!");
+        msgBox.exec();
+        return;
+    }
 
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                "",
+                                                QFileDialog::ShowDirsOnly
+                                                | QFileDialog::DontResolveSymlinks);
+    QString filename;
+    for (int i =0; i < urls.size(); i++) {
+        filename = QString(urls[i].toString());
+        filename.replace(QString("file://"), QString(""));
 
-void MainWindow::redrawImage(){
-    Mat src = this->curImage;
-    // convert color models
-    QPixmap pix = QPixmap::fromImage(QImage((unsigned char*) src.data, src.cols, src.rows, QImage::Format_RGB888));
-    ui->imageDisplay->setPixmap(pix);
+        string name = filename.toStdString();
+        unsigned found = name.find_last_of("/\\");
+        name = name.substr(found+1);
+
+        name = dir.toStdString() + '/' + name ;
+        saveImage(name, this->loadedImages[i]);
+    }
 }
 
 
@@ -160,8 +191,10 @@ string MainWindow::getSelectedOperation() {
 
 
 void MainWindow::executeOperation() {
-    if (this->curImage.empty()) {
-        cout << "No image!" << endl;
+    if (this->loadedImages.size() < 1) {
+        QMessageBox msgBox;
+        msgBox.setText("No images to process!");
+        msgBox.exec();
         return;
     }
 
@@ -170,74 +203,21 @@ void MainWindow::executeOperation() {
     FunctionMap::const_iterator call;
     call = operationsMap.find(functionName);
 
-    if (call != operationsMap.end())
-       (*call).second(this->curImage);
-    else
-       cout << "Unknown call requested" << endl;
+    for (int i = 0; i < loadedImages.size(); i++){
+        if (call != operationsMap.end()) {
+           (*call).second(loadedImages[i]);
+        }
+        else {
+            QMessageBox msgBox;
+            msgBox.setText("Unknown call requested");
+            msgBox.exec();
+            redrawImages();
+            return;
+        }
+    }
 
-    redrawImage();
+    redrawImages();
 }
 
 
-void MainWindow::equalize(Mat & image) {
-    image = equalizeIntensity(image);
-}
 
-void MainWindow::lines(Mat & image) {
-    Mat src = image;
-    Mat dst;
-    cv::cvtColor(src,dst , CV_BGR2GRAY);
-    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
-    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
-    cv::cvtColor(dst,image, CV_GRAY2RGB);
-    doLines(dst,src);
-    image = src;
-}
-
-void MainWindow::threshold(Mat & image) {
-    Mat dst;
-    cv::cvtColor(image,dst, CV_RGB2GRAY);
-    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
-//    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-//    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
-    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
-    cv::cvtColor(dst,image, CV_GRAY2RGB);
-}
-
-void MainWindow::squares(Mat & image) {
-    Mat src = image;
-    Mat dst;
-    vector<vector<Point> > squares;
-    cvtColor(src, dst, CV_BGR2RGB);
-    findSquares(dst, squares);
-    drawSquares(dst, squares);
-    cvtColor(dst, dst, CV_RGB2BGR);
-    image = dst;
-}
-void MainWindow::hsv(Mat & src) {
-    cv::Mat hsv;
-    cv::cvtColor(src, hsv, CV_BGR2HSV);
-    cv::Mat hue(src.size(), CV_8U);
-    //the third arguments are two number a pair, (0, 0) means copy the data of channels 0(hsv) to channels 0(hue)
-    cv::mixChannels(hsv, hue, {0, 0});
-    cv::Mat otsuMat;
-    cv::adaptiveThreshold(hue,otsuMat,255, CV_ADAPTIVE_THRESH_MEAN_C , CV_THRESH_BINARY, 3, 0);
-    cv::cvtColor(otsuMat,src, CV_GRAY2RGB);
-}
-
-
-void MainWindow::resizedownup(Mat & image){
-    Mat small;
-    cv::resize(image, small,Size(320,200),0,0);
-    cv::medianBlur(small, small, 9);
-    cv::resize(small, image, Size(image.cols,image.rows));
-}
-
-
-void MainWindow::adaptiveBilateralFilter(Mat & image){
-    Mat dst;
-//    cv::bilateralFilter ( image, dst, 15, 100, 35 );
-    cv::adaptiveBilateralFilter(image, dst, Size(3,3),3);
-    image = dst;
-}

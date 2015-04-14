@@ -1,21 +1,21 @@
 #include "webcam.h"
-#include "myfreenectdevice.h"
-#include "helpers.h"
+
 
 using namespace std;
 using namespace cv;
 
-Webcam::Webcam()
-{
+Webcam::Webcam() {
 
 }
+
 
 Webcam::~Webcam()
 {
 
 }
 
-void Webcam::showRGB() {
+
+void Webcam::showKinectRGB() {
     bool die(false);
     string filename("snapshot");
     string suffix(".png");
@@ -40,30 +40,22 @@ void Webcam::showRGB() {
         MyFreenectDevice& device = freenect.createDevice<MyFreenectDevice>(0);
 
         namedWindow("rgb",CV_WINDOW_AUTOSIZE);
-        namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
+/*        namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
         namedWindow("processed",CV_WINDOW_AUTOSIZE);
-        namedWindow("squares",CV_WINDOW_AUTOSIZE);
+        namedWindow("squares",CV_WINDOW_AUTOSIZE/);*/
 
         device.startVideo();
         while (!die) {
             device.getVideo(rgbMat);
-
-            findSquares(rgbMat, squares);
-            cv::imshow("thresholded", rgbMat);
-
-    //        threshold(rgbMat, thresholdedMat);
-    //        contours(thresholdedMat, contoursMat);
-    //        cv::imshow("processed", contoursMat);
-    //        cv::imshow("rgb", rgbMat);
-    //        drawSquares(rgbMat, squares);
-
+//            findSquares(rgbMat, squares);
+            cv::imshow("rgb", rgbMat);
 
             char k = cvWaitKey(5);
             if( k == 27 ){
                 cvDestroyWindow("rgb");
-                cvDestroyWindow("processed");
-                cvDestroyWindow("thresholded");
-                cvDestroyWindow("squares");
+//                cvDestroyWindow("processed");
+//                cvDestroyWindow("thresholded");
+//                cvDestroyWindow("squares");
                 break;
             }
             if( k == 8 ) {
@@ -81,4 +73,36 @@ void Webcam::showRGB() {
         msgBox.setText(e.what());
         msgBox.exec();
     }
+}
+
+
+void Webcam::showRGB() {
+    namedWindow("Camera_Output", 1);    //Create window
+    int cap = CV_CAP_ANY;
+    if (cap == 0){
+        cap = 1;
+    }
+    VideoCapture capture = VideoCapture(cap);  //Capture using any camera connected to your system
+    char key;
+
+    Mat frame;
+
+    while(1){ //Create infinte loop for live streaming
+
+        capture.read(frame); //Create image frames from capture
+        ImageOperations::fitImage(frame,frame,640,480);
+        ImageOperations::resizedownup(frame);
+        ImageOperations::thresholdGray(frame);
+        ImageOperations::thresholdBinary(frame);
+        ImageOperations::lines(frame);
+
+
+        imshow("Camera_Output", frame);   //Show image frames on created window
+        key = cvWaitKey(10);     //Capture Keyboard stroke
+        if (char(key) == 27){
+            break;      //If you hit ESC key loop will break.
+        }
+    }
+    capture.release();//Release capture.
+    destroyWindow("Camera_Output"); //Destroy Window
 }

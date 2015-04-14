@@ -29,17 +29,14 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 
 set(SOURCE_FILES
     src/main.cc
-    src/batchwindow.h
-    src/batchwindow.cpp
     src/mainwindow.h
     src/mainwindow.cc
     src/webcam.h
     src/webcam.cpp
-    src/helpers.h
-    src/helpers.cpp
     src/myfreenectdevice.h
     src/myfreenectdevice.cpp
-
+    src/imageoperations.h
+    src/imageoperations.cpp
 )
 
 if (WIN32)
@@ -48,7 +45,6 @@ endif ()
 
 set(UI_FILES
     ui/mainwindow.ui
-    ui/batchwindow.ui
 )
 source_group("UI Files" FILES ${UI_FILES})
 

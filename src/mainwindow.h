@@ -7,13 +7,15 @@
 #include <map>
 
 // app
-#include "helpers.h"
 #include "webcam.h"
-#include "batchwindow.h"
+#include "imageoperations.h"
 
 // cv
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
+
+// boost
+#include <boost/filesystem.hpp>
 
 // qt
 #include <QMainWindow>
@@ -28,9 +30,13 @@
 #include <QStringList>
 #include <QStringListModel>
 #include <QModelIndex>
+#include <QScrollBar>
+#include <QLabel>
+#include <QMessageBox>
 
 using namespace cv;
 using namespace std;
+using namespace boost::filesystem;
 
 namespace Ui
 {
@@ -45,25 +51,20 @@ typedef map<string,FunctionPointer> FunctionMap;
 class MainWindow : public QMainWindow {
     Q_OBJECT
     Mat curImage;
+
+    vector<Mat> loadedImages;
+
     QScopedPointer<Ui::MainWindow> ui;
     FunctionMap	operationsMap;
     QStringList List;
-
-    void static equalize(Mat & image);
-    void static lines(Mat & image);
-    void static threshold(Mat & image);
-    void static squares(Mat & image);
-    void static hsv(Mat & src);
-    void static resizedownup(Mat & image);
-    void static adaptiveBilateralFilter(Mat & image);
+    QList<QUrl> urls;
+    QList<QLabel *> imageLabels;
 
     string  getSelectedOperation();
 
 public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
-
-    void drawImage(Mat image);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e);
@@ -72,23 +73,21 @@ protected:
 private:
     QStringListModel *operationsModel;
 
+    void redrawImages();
+    void loadImage(string filename);
+    void saveImage(string fileName, const Mat &image);
 
-    void redrawImage();
-    void fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight);
-    void loadLocalImage(QString fileName);
-    batchWindow *batchWin;
 
-    bool thresholdWindow = false;
-    bool squaresWindow = false;
-    bool linesWindow = false;
-    bool equalizedWindow = false;
+
 
 private slots:
-    void loadImage();
-    void saveImage();
+    void openImage();
     void showWebcam();
-    void showBatchWindow();
+    void showKinect();
+    void clearImages();
     void executeOperation();
+    void reloadImages();
+    void saveImages();
 };
 
 

@@ -1,11 +1,11 @@
 #include <QApplication>
 #include <iostream>
-#include "batchwindow.h"
 #include "mainwindow.h"
 
 
 using namespace std;
 using namespace cv;
+
 
 int main(int argc, char *argv[])
 {
