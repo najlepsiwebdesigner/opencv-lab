@@ -13,6 +13,9 @@
 // cv
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/nonfree/features2d.hpp"
 
 // boost
 #include <boost/filesystem.hpp>
@@ -33,6 +36,7 @@
 #include <QScrollBar>
 #include <QLabel>
 #include <QMessageBox>
+#include <QListWidgetItem>
 
 using namespace cv;
 using namespace std;
@@ -79,7 +83,6 @@ private:
 
 
 
-
 private slots:
     void openImage();
     void showWebcam();
@@ -88,8 +91,14 @@ private slots:
     void executeOperation();
     void reloadImages();
     void saveImages();
+    void SIFT();
+    void itemDblClicked(QModelIndex);
+    void filtering();
 };
 
+
+QImage cvMatToQImage(const cv::Mat &inMat);
+QPixmap cvMatToQPixmap(const cv::Mat &inMat);
 
 
 #endif

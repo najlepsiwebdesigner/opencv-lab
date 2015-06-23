@@ -1,5 +1,6 @@
 #include "imageoperations.h"
 
+
 ImageOperations::ImageOperations()
 {
 
@@ -109,20 +110,20 @@ void ImageOperations::findSquares( const Mat& image, vector<vector<Point> >& squ
 
 
 
-//            int largest_area=0;
-//            int largest_contour_index=0;
-//            for( int i = 0; i< contours.size(); i++ ) // iterate through each contour.
-//            {
-//                double a=contourArea( contours[i],false);  //  Find the area of contour
-//                if(a>largest_area){
-//                    largest_area=a;
-//                    largest_contour_index=i;                //Store the index of largest contour
-//                }
-//            }
+            int largest_area=0;
+            int largest_contour_index=0;
+            for( int i = 0; i< contours.size(); i++ ) // iterate through each contour.
+            {
+                double a=contourArea( contours[i],false);  //  Find the area of contour
+                if(a>largest_area){
+                    largest_area=a;
+                    largest_contour_index=i;                //Store the index of largest contour
+                }
+            }
 
 
 
-//            cv::drawContours(gray, contours,largest_contour_index,Scalar(255,255,255));
+            cv::drawContours(gray, contours,largest_contour_index,Scalar(255,255,255));
 //            cv::imshow("test", gray);
 //            break;
 
@@ -135,7 +136,7 @@ void ImageOperations::findSquares( const Mat& image, vector<vector<Point> >& squ
             {
                 // approximate contour with accuracy proportional
                 // to the contour perimeter
-                approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
+                approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.01, true);
 
                 // square contours should have 4 vertices after approximation
                 // relatively large area (to filter out noisy contours)
@@ -159,7 +160,7 @@ void ImageOperations::findSquares( const Mat& image, vector<vector<Point> >& squ
                     // if cosines of all angles are small
                     // (all angles are ~90 degree) then write quandrange
                     // vertices to resultant sequence
-                    if( maxCosine < 0.3 )
+                    if( maxCosine < 0.5)
                         squares.push_back(approx);
                 }
             }
@@ -185,7 +186,7 @@ void ImageOperations::drawSquares( Mat& image, const vector<vector<Point> >& squ
 
 void ImageOperations::filterLines(std::vector<cv::Vec4i>& lines) {
     std::vector<cv::Vec4i> output;
-    double angleThreshold = 0.005;
+    double angleThreshold = 0.010;
     // double xThreshold = 10;
     // double yThreshold = 10;
 
@@ -299,74 +300,80 @@ void ImageOperations::equalize(Mat & image) {
 }
 
 void ImageOperations::lines(Mat & image) {
-    Mat src = image.clone();
+//    Mat src = image.clone();
     Mat dst;
-    cv::cvtColor(src,dst , CV_RGB2GRAY);
-    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
+    cv::cvtColor(image,dst , CV_RGB2GRAY);
+//    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
 
 //    cv::threshold(dst,dst,0,255,CV_THRESH_BINARY);
-    cv::Canny(dst, dst, 1, 1, 3, true);
-    dilate( dst, dst, Mat(Size(1,1), CV_8UC1));
+//    cv::Canny(dst, dst, 1, 1, 3, true);
+//    dilate( dst, dst, Mat(Size(1,1), CV_8UC1));
+
+
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dst, lines, 1, CV_PI/720,80, 80, 40);
+    cv::HoughLinesP(dst, lines, 1, CV_PI/360,50,50, 10);
+
+//    cout << lines.size() << endl;
+
     std::sort(lines.begin(), lines.end(), sortByLength);
 //    filterLines(lines);
     cv::cvtColor(dst,dst , CV_GRAY2RGB);
-    lines.resize(4);
+//    lines.resize(10);
 
     // Expand and draw the lines
     for (int i = 0; i < lines.size(); i++)
     {
-        cv::Vec4i v = lines[i];
-        lines[i][0] = 0;
-        lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
-        lines[i][2] = dst.cols;
-        lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
+//        cv::Vec4i v = lines[i];
+//        lines[i][0] = 0;
+//        lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
+//        lines[i][2] = dst.cols;
+//        lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
         cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0), 1);
     }
 
+//    cv::imshow("",dst);
 
-    std::vector<cv::Point2f> corners;
-    for (int i = 0; i < lines.size(); i++)
-        {
-            for (int j = i+1; j < lines.size(); j++)
-            {
-                cv::Vec4i v = lines[i];
-                Point2f intersection;
 
-                bool has_intersection = getIntersectionPoint(
-                    Point(lines[i][0],lines[i][1]),
-                    Point(lines[i][2], lines[i][3]),
-                    Point(lines[j][0],lines[j][1]),
-                    Point(lines[j][2], lines[j][3]),
-                    intersection);
+//    std::vector<cv::Point2f> corners;
+//    for (int i = 0; i < lines.size(); i++)
+//        {
+//            for (int j = i+1; j < lines.size(); j++)
+//            {
+//                cv::Vec4i v = lines[i];
+//                Point2f intersection;
 
-                if (has_intersection
-                    && intersection.x > 0
-                    && intersection.y > 0
-                    && intersection.x < dst.cols
-                    && intersection.y < dst.rows){
-                    corners.push_back(intersection);
-                }
+//                bool has_intersection = getIntersectionPoint(
+//                    Point(lines[i][0],lines[i][1]),
+//                    Point(lines[i][2], lines[i][3]),
+//                    Point(lines[j][0],lines[j][1]),
+//                    Point(lines[j][2], lines[j][3]),
+//                    intersection);
 
-                cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
-            }
-        }
+//                if (has_intersection
+//                    && intersection.x > 0
+//                    && intersection.y > 0
+//                    && intersection.x < dst.cols
+//                    && intersection.y < dst.rows){
+//                    corners.push_back(intersection);
+//                }
 
-    if (corners.size() < 1) {
-        return;
-    }
+//                cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
+//            }
+//        }
 
-    std::vector<cv::Point2f> approx;
-    cv::approxPolyDP(cv::Mat(corners), approx, cv::arcLength(cv::Mat(corners), true) * 0.03, true);
+//    if (corners.size() < 1) {
+//        return;
+//    }
 
-//    cout << approx.size() << endl;
-    if (approx.size() != 4)
-    {
-        std::cout << "The object is not quadrilateral!" << std::endl;
-        return;
-    }
+//    std::vector<cv::Point2f> approx;
+//    cv::approxPolyDP(cv::Mat(corners), approx, cv::arcLength(cv::Mat(corners), true) * 0.03, true);
+
+//    if (approx.size() != 4)
+//    {
+//        std::cout << "The object is not quadrilateral!" << std::endl;
+//        return;
+//    }
 
 
 //    // draw lines around image
@@ -394,14 +401,18 @@ void ImageOperations::lines(Mat & image) {
 //    }
 
     // compute and draw center of mass
-    cv::Point2f center(0,0);
 
-    for (int i = 0; i < corners.size(); i++)
-        center += corners[i];
-    center *= (1. / corners.size());
 
-    sortCorners(corners, center);
-    cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
+
+
+//    cv::Point2f center(0,0);
+
+//    for (int i = 0; i < corners.size(); i++)
+//        center += corners[i];
+//    center *= (1. / corners.size());
+
+//    sortCorners(corners, center);
+//    cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
 
     image = dst;
 }
@@ -411,22 +422,28 @@ void ImageOperations::lines(Mat & image) {
 
 
 
+void ImageOperations::gaussian(Mat & image) {
+    cv::GaussianBlur(image, image, Size( 7, 7) ,7,7);
+}
 
 
-
+void ImageOperations::thresholdAdaptive(Mat & image) {
+    Mat dst;
+    cv::cvtColor(image,dst , CV_RGB2GRAY);
+    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
+    cv::cvtColor(dst,image, CV_GRAY2RGB);
+}
 
 void ImageOperations::thresholdGray(Mat & image) {
     Mat dst;
-    cv::cvtColor(image,dst , CV_BGR2GRAY);
-    cv::GaussianBlur(dst, dst, Size( 7, 7) ,7,7);
+    cv::cvtColor(image,dst , CV_RGB2GRAY);
     cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-//    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
     cv::cvtColor(dst,image, CV_GRAY2RGB);
 }
 
 void ImageOperations::thresholdBinary(Mat & image) {
     Mat dst;
-    cv::cvtColor(image,image, CV_BGR2GRAY);
+    cv::cvtColor(image,image, CV_RGB2GRAY);
     cv::threshold(image,image,0,255,THRESH_BINARY + CV_THRESH_OTSU);
     cv::cvtColor(image,image, CV_GRAY2RGB);
 }
@@ -471,7 +488,7 @@ void ImageOperations::adaptiveBilateralFilter(Mat & image){
     image = dst;
 }
 
-void ImageOperations::kMeans(Mat &src) {
+void ImageOperations::kMeans(Mat & src) {
     cv::Mat samples(src.total(), 3, CV_32F);
        auto samples_ptr = samples.ptr<float>(0);
        for( int row = 0; row != src.rows; ++row){
@@ -512,9 +529,8 @@ void ImageOperations::kMeans(Mat &src) {
                new_image_begin += 3; ++labels_ptr;
            }
        }
-       cv::Mat binary;
-       cv::Canny(new_image, binary, 30, 90);
-       cv::cvtColor(binary,src, CV_GRAY2RGB);
+
+       src = new_image.clone();
 }
 
 
@@ -543,7 +559,98 @@ void ImageOperations::sobel(Mat & src) {
 
     /// Total Gradient (approximate)
     addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad );
+
+//    cv::dilate(grad, grad, Mat(), Point(1,-1));
+
     cvtColor( grad, src, COLOR_GRAY2RGB );
 }
 
 
+void ImageOperations::canny(Mat & image) {
+    cv::Canny(image, image, 30, 90);
+    dilate(image, image, Mat(), Point(1,-1));
+    cv::cvtColor(image,image, CV_GRAY2RGB);
+}
+
+
+void ImageOperations::erosion(Mat & image) {
+   //get the structuring of rectangle, size is 5 * 5
+   cv::Mat const shape = cv::getStructuringElement(
+                 cv::MORPH_RECT, cv::Size(5, 5));
+   cv::erode(image, image, shape);
+}
+
+
+void ImageOperations::dilation(Mat & image) {
+    dilate(image, image, Mat(), Point(-1, -1), 2, 1, 1);
+}
+
+
+void ImageOperations::biggestContour(Mat & image) {
+
+    int largest_area=0;
+    int largest_contour_index=0;
+//    Rect bounding_rect;
+
+    Mat thr = image.clone();
+    cvtColor(image,thr,CV_RGB2GRAY); //Convert to gray
+    //     threshold(thr, thr,25, 255,THRESH_BINARY); //Threshold the gray
+
+    vector<vector<Point>> contours; // Vector for storing contour
+    vector<Vec4i> hierarchy;
+
+
+//    imshow("thr", thr);
+    findContours( thr, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE ); // Find the contours in the image
+
+    for( int i = 0; i< contours.size(); i++ ) // iterate through each contour.
+    {
+        double a=contourArea( contours[i],false);  //  Find the area of contour
+        if(a>largest_area){
+            largest_area=a;
+            largest_contour_index=i;                //Store the index of largest contour
+//            bounding_rect=boundingRect(contours[i]); // Find the bounding rectangle for biggest contour
+            drawContours( image, contours,i, Scalar(0,0,0), -1, 8, hierarchy, 0);
+        }
+
+    }
+
+    Scalar color( 255,0,0);
+//    image.setTo(cv::Scalar::all(0));
+    drawContours( image, contours,largest_contour_index, color, -1, 8, hierarchy, 0); // Draw the largest contour using previously stored index.
+//    rectangle(image, bounding_rect,  Scalar(0,255,0),1, 8,0);
+
+}
+
+
+
+void ImageOperations::convexH(Mat & image) {
+    vector<vector<Point> > contours;
+    vector<vector<Point> > hull(1);
+    vector<Vec4i> hierarchy;
+    int largest_area=0;
+    int largest_contour_index=0;
+
+    cvtColor( image, image, CV_RGB2GRAY );
+    cv::threshold(image,image,0,255,THRESH_BINARY + CV_THRESH_OTSU);
+
+    findContours( image, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+    /// Find biggest contour
+    for( int i = 0; i < contours.size(); i++ )
+    {
+        double a=contourArea( contours[i],false);  //  Find the area of contour
+        if(a>largest_area){
+            largest_area=a;
+            largest_contour_index=i;                //Store the index of largest contour
+        }
+    }
+
+    // Calculate convex hull of largest contour
+    convexHull( Mat(contours[largest_contour_index]), hull[0], false );
+
+    cvtColor( image, image, CV_GRAY2RGB);
+
+    drawContours( image, contours, largest_contour_index, Scalar(255,255,0), 1, 8, vector<Vec4i>(), 0, Point() );
+    drawContours( image, hull, 0, Scalar(255,255,0), 1, 8, vector<Vec4i>(), 0, Point() );
+}

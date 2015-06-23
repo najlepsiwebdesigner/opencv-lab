@@ -23,6 +23,14 @@ public:
     void static adaptiveBilateralFilter(Mat & image);
     void static kMeans(Mat & src);
     void static sobel(Mat & src);
+    void static gaussian(Mat & image);
+    void static thresholdAdaptive(Mat & image);
+    void static canny(Mat & image);
+    void static erosion(Mat & image);
+    void static dilation(Mat & image);
+    void static biggestContour(Mat & image);
+    void static convexH(Mat & image);
+
 
     double static cross(Point v1,Point v2);
     bool static getIntersectionPoint(Point a1, Point a2, Point b1, Point b2, Point2f &intPnt);
