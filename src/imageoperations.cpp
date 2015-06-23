@@ -347,10 +347,11 @@ cv::cvtColor(dst,dst , CV_GRAY2RGB);
 
 
 
-    std::vector<cv::Point2f> intersections;
 
+    // expand lines to borders of the image - we will get intersections with image borders easily
     for (int i = 0; i < lines.size(); i++)
     {
+        std::vector<cv::Point2f> lineIntersections;
         for (int j = 0; j < myLines.size(); j++)
         {
             cv::Vec4i v = lines[i];
@@ -368,13 +369,151 @@ cv::cvtColor(dst,dst , CV_GRAY2RGB);
                 && intersection.y >= 0
                 && intersection.x <= dst.cols
                 && intersection.y <= dst.rows){
-                intersections.push_back(intersection);
-                cv::circle(dst, intersection, 3, CV_RGB(255,255,0),3);
+                lineIntersections.push_back(intersection);
+//                cv::circle(dst, intersection, 3, CV_RGB(255,255,0),3);
             }
+        }
 
-
+        if (lineIntersections.size() > 0) {
+            lines[i][0] = lineIntersections[0].x;
+            lines[i][1] = lineIntersections[0].y;
+            lines[i][2] = lineIntersections[1].x;
+            lines[i][3] = lineIntersections[1].y;
         }
     }
+
+
+
+    struct LineCluster {
+        int sumX1;
+        int sumY1;
+        int sumX2;
+        int sumY2;
+        int count;
+    };
+
+    vector<LineCluster> clusters;
+
+
+    int distanceThreshold = 30;
+    double angleThreshold = 0.10;
+
+        // create first group
+        LineCluster cluster;
+        cluster.sumX1 = lines[0][0];
+        cluster.sumY1 = lines[0][1];
+        cluster.sumX2 = lines[0][2];
+        cluster.sumY2 = lines[0][3];
+        cluster.count = 1;
+        clusters.push_back(cluster);
+
+
+        // cout << lines[0][0] << " " << lines[0][1] << " " << lines[0][2] << " " << lines[0][3] << endl;
+
+        // loop through rest of groups
+        for (int i = 1; i < lines.size(); i++) {
+            bool in_some_cluster = false;
+
+            for (int j = 0; j < clusters.size(); j++) {
+
+                 int cluster_x1 = clusters[j].sumX1/clusters[j].count;
+                 int cluster_y1 = clusters[j].sumY1/clusters[j].count;
+
+                 int cluster_x2 = clusters[j].sumX2/clusters[j].count;
+                 int cluster_y2 = clusters[j].sumY2/clusters[j].count;
+
+
+//                 cout << cluster_x1 << " " << cluster_y1 << " " << cluster_x2 << " " << cluster_y2 << endl;
+//                cout << clusters[j].sumX1 << " " << clusters[j].sumY1 << " " << clusters[j].sumX2 << " " << clusters[j].sum<< endl;
+
+
+//                 circle(dst, Point(lines[i][0], lines[i][1]), 5, Scalar(255,0,0),-1);
+//                 circle(dst, Point(lines[i][2], lines[i][3]), 5, Scalar(255,0,0),-1);
+//                 circle(dst, Point(cluster_x1, cluster_y1), 5, Scalar(255,255,0),-1);
+//                 circle(dst, Point(cluster_x2, cluster_y2), 5, Scalar(255,255,0),-1);
+
+
+
+                 double angle1 = atan2((double)lines[i][3] - lines[i][1], (double)lines[i][2] - lines[i][0]);
+                 double angle2 = atan2((double)cluster_y2 - cluster_y1, (double)cluster_x2 - cluster_x1);
+
+
+
+
+                 float distance_cluster1_to_line1 = sqrt(((cluster_x1 - lines[i][0])*(cluster_x1 - lines[i][0])) + (cluster_y1 - lines[i][1])*(cluster_y1 - lines[i][1]));
+                 float distance_cluster1_to_line2 = sqrt(((cluster_x1 - lines[i][2])*(cluster_x1 - lines[i][2])) + (cluster_y1 - lines[i][3])*(cluster_y1 - lines[i][3]));
+
+                 float distance_cluster2_to_line1 = sqrt(((cluster_x2 - lines[i][0])*(cluster_x2 - lines[i][0])) + (cluster_y2 - lines[i][1])*(cluster_y2 - lines[i][1]));
+                 float distance_cluster2_to_line2 = sqrt(((cluster_x2 - lines[i][2])*(cluster_x2 - lines[i][2])) + (cluster_y2 - lines[i][3])*(cluster_y2 - lines[i][3]));
+
+//                 cout << "Distance to other points:" << endl <<  "1->1: " << distance_cluster1_to_line1 << endl << "1->2: " << distance_cluster1_to_line2 << endl << "2->1: " << distance_cluster2_to_line1 << endl << "2->2: " << distance_cluster2_to_line2 << endl;
+
+
+                 if (((distance_cluster1_to_line1 < distanceThreshold) &&
+                         (distance_cluster2_to_line2 < distanceThreshold || abs(angle1 - angle2) < angleThreshold)) ||
+                      ((distance_cluster1_to_line2 < distanceThreshold) &&
+                         (distance_cluster2_to_line1 < distanceThreshold || abs(angle1 - angle2) < angleThreshold))){
+
+                         clusters[j].sumX1 += lines[i][0];
+                         clusters[j].sumY1 += lines[i][1];
+                         clusters[j].sumX2 += lines[i][2];
+                         clusters[j].sumY2 += lines[i][3];
+                         clusters[j].count += 1;
+                         in_some_cluster = true;
+            }
+
+//                 float distance cluster2_to_line1 =
+//                 float distance cluster1_to_line2 =
+//                 float distance cluster2_to_line2 =
+
+
+//                Point groupCenter(groups[j].x_sum/groups[j].count, groups[j].y_sum/groups[j].count);
+//                int sum = ((groupCenter.x - intersections[i].x) * (groupCenter.x - intersections[i].x)) + ((groupCenter.y - intersections[i].y) * (groupCenter.y - intersections[i].y));
+//                float length = sqrt(sum);
+
+//                // if this point fits into some group, push it in
+//                if (length < distanceThreshold) {
+//                    groups[j].x_sum += intersections[i].x;
+//                    groups[j].y_sum += intersections[i].y;
+//                    groups[j].count += 1;
+//                    in_some_cluster = true;
+//                }
+            }
+            // if point doesnt fit, create new group for it
+            if (in_some_cluster == false){
+                LineCluster cluster;
+                cluster.sumX1 = lines[i][0];
+                cluster.sumY1 = lines[i][1];
+                cluster.sumX2 = lines[i][2];
+                cluster.sumY2 = lines[i][3];
+                cluster.count = 1;
+                clusters.push_back(cluster);
+            }
+        }
+
+
+//        cout << clusters.size() << endl;
+
+        std::vector<cv::Vec4i> clusteredLines;
+
+        for (int i = 0; i < clusters.size(); i++){
+            circle(dst, Point(clusters[i].sumX1/clusters[i].count, clusters[i].sumY1/clusters[i].count), 5, Scalar(0,0,255),-1);
+            circle(dst, Point(clusters[i].sumX2/clusters[i].count, clusters[i].sumY2/clusters[i].count), 5, Scalar(0,0,255),-1);
+
+
+            cv::line(dst, Point(clusters[i].sumX1/clusters[i].count, clusters[i].sumY1/clusters[i].count), Point(clusters[i].sumX2/clusters[i].count, clusters[i].sumY2/clusters[i].count), CV_RGB(255,0,0), 1);
+//            cout << clusters[i].sumX1/clusters[i].count << " " << clusters[i].sumY1/clusters[i].count << endl;
+//            cout << clusters[i].sumX2/clusters[i].count << " " << clusters[i].sumY2/clusters[i].count << endl;
+
+
+            cv::Vec4i line;
+            line[0] = clusters[i].sumX1/clusters[i].count;
+            line[1] = clusters[i].sumY1/clusters[i].count;
+            line[2] = clusters[i].sumX2/clusters[i].count;
+            line[3] = clusters[i].sumY2/clusters[i].count;
+
+            clusteredLines.push_back(line);
+        }
 
 
 
@@ -385,46 +524,46 @@ cv::cvtColor(dst,dst , CV_GRAY2RGB);
 
 //    lines.resize(10);
 
-    // Expand and draw the lines
-    for (int i = 0; i < lines.size(); i++)
-    {
-//        cv::Vec4i v = lines[i];
-//        lines[i][0] = 0;
-//        lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
-//        lines[i][2] = dst.cols;
-//        lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
-        cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0), 1);
-    }
+//    // Expand and draw the lines
+//    for (int i = 0; i < lines.size(); i++)
+//    {
+////        cv::Vec4i v = lines[i];
+////        lines[i][0] = 0;
+////        lines[i][1] = ((float)v[1] - v[3]) / (v[0] - v[2]) * - v[0] + v[1];
+////        lines[i][2] = dst.cols;
+////        lines[i][3] = ((float)v[1] - v[3]) / (v[0] - v[2]) * (dst.cols - v[2]) + v[3];
+//        cv::line(dst, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(255,0,0), 1);
+//    }
 
 //    cv::imshow("",dst);
 
 
-//    std::vector<cv::Point2f> corners;
-//    for (int i = 0; i < lines.size(); i++)
-//    {
-//        for (int j = i+1; j < lines.size(); j++)
-//        {
-//            cv::Vec4i v = lines[i];
-//            Point2f intersection;
+    std::vector<cv::Point2f> corners;
+    for (int i = 0; i < clusteredLines.size(); i++)
+    {
+        for (int j = i+1; j < clusteredLines.size(); j++)
+        {
+            cv::Vec4i v = clusteredLines[i];
+            Point2f intersection;
 
-//            bool has_intersection = getIntersectionPoint(
-//                Point(lines[i][0],lines[i][1]),
-//                Point(lines[i][2], lines[i][3]),
-//                Point(lines[j][0],lines[j][1]),
-//                Point(lines[j][2], lines[j][3]),
-//                intersection);
+            bool has_intersection = getIntersectionPoint(
+                Point(clusteredLines[i][0],clusteredLines[i][1]),
+                Point(clusteredLines[i][2], clusteredLines[i][3]),
+                Point(clusteredLines[j][0],clusteredLines[j][1]),
+                Point(clusteredLines[j][2], clusteredLines[j][3]),
+                intersection);
 
-//            if (has_intersection
-//                && intersection.x > 0
-//                && intersection.y > 0
-//                && intersection.x < dst.cols
-//                && intersection.y < dst.rows){
-//                corners.push_back(intersection);
-//            }
+            if (has_intersection
+                && intersection.x > 0
+                && intersection.y > 0
+                && intersection.x < dst.cols
+                && intersection.y < dst.rows){
+                corners.push_back(intersection);
+            }
 
-//            cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
-//        }
-//    }
+            cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
+        }
+    }
 
 //    if (corners.size() < 1) {
 //        return;
@@ -502,14 +641,37 @@ cv::cvtColor(dst,dst , CV_GRAY2RGB);
 
 
 
-//    cv::Point2f center(0,0);
+    cv::Point2f center(0,0);
 
-//    for (int i = 0; i < corners.size(); i++)
-//        center += corners[i];
-//    center *= (1. / corners.size());
+    for (int i = 0; i < corners.size(); i++)
+        center += corners[i];
+    center *= (1. / corners.size());
 
-//    sortCorners(corners, center);
-//    cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
+    sortCorners(corners, center);
+    cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
+
+
+
+
+    // Define the destination image
+    cv::Mat quad = cv::Mat::zeros(480, 640, CV_8UC3);
+
+    // Corners of the destination image
+    std::vector<cv::Point2f> quad_pts;
+    quad_pts.push_back(cv::Point2f(0, 0));
+    quad_pts.push_back(cv::Point2f(quad.cols, 0));
+    quad_pts.push_back(cv::Point2f(quad.cols, quad.rows));
+    quad_pts.push_back(cv::Point2f(0, quad.rows));
+
+    // Get transformation matrix
+    cv::Mat transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+
+    // Apply perspective transformation
+    cv::warpPerspective(image, quad, transmtx, quad.size());
+    cv::imshow("quadrilateral", quad);
+
+
+
 
     image = dst.clone();
 }
