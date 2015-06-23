@@ -452,11 +452,13 @@ void MainWindow::filtering() {
         ImageOperations::erosion(image);
         ImageOperations::biggestContour(image);
 //        ImageOperations::erosion(image);
+        ImageOperations::canny(image);
+        ImageOperations::lines(image);
 
-//        double alpha = 0.5; double beta;
-//        beta = ( 1.0 - alpha );
-//        addWeighted(loadedImages[i] , alpha, image, beta, 0.0, loadedImages[i]);
-        loadedImages[i] = image.clone();
+        double alpha = 0.5; double beta;
+        beta = ( 1.0 - alpha );
+        addWeighted(loadedImages[i] , alpha, image, beta, 0.0, loadedImages[i]);
+//        loadedImages[i] = image.clone();
     }
 
     redrawImages();

@@ -337,70 +337,147 @@ void ImageOperations::lines(Mat & image) {
 
 //    std::vector<cv::Point2f> corners;
 //    for (int i = 0; i < lines.size(); i++)
+//    {
+//        for (int j = i+1; j < lines.size(); j++)
 //        {
-//            for (int j = i+1; j < lines.size(); j++)
-//            {
-//                cv::Vec4i v = lines[i];
-//                Point2f intersection;
+//            cv::Vec4i v = lines[i];
+//            Point2f intersection;
 
-//                bool has_intersection = getIntersectionPoint(
-//                    Point(lines[i][0],lines[i][1]),
-//                    Point(lines[i][2], lines[i][3]),
-//                    Point(lines[j][0],lines[j][1]),
-//                    Point(lines[j][2], lines[j][3]),
-//                    intersection);
+//            bool has_intersection = getIntersectionPoint(
+//                Point(lines[i][0],lines[i][1]),
+//                Point(lines[i][2], lines[i][3]),
+//                Point(lines[j][0],lines[j][1]),
+//                Point(lines[j][2], lines[j][3]),
+//                intersection);
 
-//                if (has_intersection
-//                    && intersection.x > 0
-//                    && intersection.y > 0
-//                    && intersection.x < dst.cols
-//                    && intersection.y < dst.rows){
-//                    corners.push_back(intersection);
-//                }
-
-//                cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
+//            if (has_intersection
+//                && intersection.x > 0
+//                && intersection.y > 0
+//                && intersection.x < dst.cols
+//                && intersection.y < dst.rows){
+//                corners.push_back(intersection);
 //            }
+
+//            cv::circle(dst, intersection, 3, CV_RGB(0,0,255), 2);
 //        }
+//    }
 
 //    if (corners.size() < 1) {
 //        return;
 //    }
 
-//    std::vector<cv::Point2f> approx;
-//    cv::approxPolyDP(cv::Mat(corners), approx, cv::arcLength(cv::Mat(corners), true) * 0.03, true);
+//    vector<vector<cv::Point>> approx;
+//    cv::approxPolyDP(cv::Mat(corners), approx[0], cv::arcLength(cv::Mat(corners), true) * 0.03, true);
 
-//    if (approx.size() != 4)
+//    if (approx[0].size() != 4)
 //    {
 //        std::cout << "The object is not quadrilateral!" << std::endl;
 //        return;
 //    }
 
 
-//    // draw lines around image
-//    std::vector<cv::Vec4i> myLines;
-
-//    cv::Vec4i leftLine;leftLine[0] = 0;leftLine[1] = 0;leftLine[2] = 0;leftLine[3] = dst.rows;
-//    myLines.push_back(leftLine);
-//    cv::Vec4i rightLine;
-//    rightLine[0] = dst.cols;rightLine[1] = 0;rightLine[2] = dst.cols;rightLine[3] = dst.rows;
-//    myLines.push_back(rightLine);
-//    cv::Vec4i topLine;
-//    topLine[0] = dst.cols;topLine[1] = 0;topLine[2] = 0;topLine[3] = 0;
-//    myLines.push_back(topLine);
-//    cv::Vec4i bottomLine;
-//    bottomLine[0] = dst.cols;bottomLine[1] = dst.rows;bottomLine[2] = 0;bottomLine[3] = dst.rows;
-//    myLines.push_back(bottomLine);
 
 
+    // draw lines around image
+    std::vector<cv::Vec4i> myLines;
 
+    cv::Vec4i leftLine;leftLine[0] = 0;leftLine[1] = 0;leftLine[2] = 0;leftLine[3] = dst.rows;
+    myLines.push_back(leftLine);
+    cv::Vec4i rightLine;
+    rightLine[0] = dst.cols;rightLine[1] = 0;rightLine[2] = dst.cols;rightLine[3] = dst.rows;
+    myLines.push_back(rightLine);
+    cv::Vec4i topLine;
+    topLine[0] = dst.cols;topLine[1] = 0;topLine[2] = 0;topLine[3] = 0;
+    myLines.push_back(topLine);
+    cv::Vec4i bottomLine;
+    bottomLine[0] = dst.cols;bottomLine[1] = dst.rows;bottomLine[2] = 0;bottomLine[3] = dst.rows;
+    myLines.push_back(bottomLine);
+
+
+
+    std::vector<cv::Point2f> intersections;
+
+    for (int i = 0; i < lines.size(); i++)
+    {
+        for (int j = 0; j < myLines.size(); j++)
+        {
+            cv::Vec4i v = lines[i];
+            Point2f intersection;
+
+            bool has_intersection = getIntersectionPoint(
+                Point(lines[i][0],lines[i][1]),
+                Point(lines[i][2], lines[i][3]),
+                Point(myLines[j][0],myLines[j][1]),
+                Point(myLines[j][2], myLines[j][3]),
+                intersection);
+
+            if (has_intersection
+                && intersection.x >= 0
+                && intersection.y >= 0
+                && intersection.x <= dst.cols
+                && intersection.y <= dst.rows){
+                intersections.push_back(intersection);
+                cv::circle(dst, intersection, 3, CV_RGB(255,255,0),3);
+            }
+
+
+        }
+    }
 
 
 //    for (int i = 0; i < myLines.size(); i++)
 //    {
-//        cv::line(dst, cv::Point(myLines[i][0], myLines[i][1]), cv::Point(myLines[i][2], myLines[i][3]), CV_RGB(0, 255,0),5);
+//        cv::line(dst, cv::Point(myLines[i][0], myLines[i][1]), cv::Point(myLines[i][2], myLines[i][3]), CV_RGB(0, 255,0),1);
 //    }
 
-    // compute and draw center of mass
+    // init
+    struct Group {
+        int x_sum;
+        int y_sum;
+        int count;
+    };
+
+    int distanceThreshold = 30;
+    vector<Group> groups;
+
+    // create first group
+    Group group;
+    group.x_sum = intersections[0].x;
+    group.y_sum = intersections[0].y;
+    group.count = 1;
+    groups.push_back(group);
+
+    // loop through rest of groups
+    for (int i = 1; i < intersections.size(); i++) {
+        bool in_some_group = false;
+
+        for (int j = 0; j < groups.size(); j++) {
+            Point groupCenter(groups[j].x_sum/groups[j].count, groups[j].y_sum/groups[j].count);
+            int sum = ((groupCenter.x - intersections[i].x) * (groupCenter.x - intersections[i].x)) + ((groupCenter.y - intersections[i].y) * (groupCenter.y - intersections[i].y));
+            float length = sqrt(sum);
+
+            // if this point fits into some group, push it in
+            if (length < distanceThreshold) {
+                groups[j].x_sum += intersections[i].x;
+                groups[j].y_sum += intersections[i].y;
+                groups[j].count += 1;
+                in_some_group = true;
+            }
+        }
+        // if point doesnt fit, create new group for it
+        if (in_some_group == false){
+            Group group;
+            group.x_sum = intersections[i].x;
+            group.y_sum = intersections[i].y;
+            group.count = 1;
+            groups.push_back(group);
+        }
+    }
+
+    for (int i = 0; i < groups.size(); i++){
+        circle(dst, Point(groups[i].x_sum/groups[i].count, groups[i].y_sum/groups[i].count), 5, Scalar(0,0,255),-1);
+    }
+
 
 
 
@@ -414,7 +491,7 @@ void ImageOperations::lines(Mat & image) {
 //    sortCorners(corners, center);
 //    cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
 
-    image = dst;
+    image = dst.clone();
 }
 
 
