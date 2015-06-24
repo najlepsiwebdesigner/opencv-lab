@@ -94,6 +94,8 @@ private slots:
     void SIFT();
     void itemDblClicked(QModelIndex);
     void filtering();
+    void locating();
+    void cutAndPerspective();
 };
 
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>954</width>
-    <height>565</height>
+    <height>636</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -52,9 +52,9 @@
     <property name="geometry">
      <rect>
       <x>720</x>
-      <y>20</y>
+      <y>10</y>
       <width>231</width>
-      <height>541</height>
+      <height>621</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -70,38 +70,87 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget">
+   <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>530</y>
-      <width>369</width>
-      <height>32</height>
+      <width>701</width>
+      <height>100</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
       <widget class="QPushButton" name="SIFT">
        <property name="text">
         <string>SIFT</string>
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QPushButton" name="filtering">
-       <property name="text">
-        <string>Filtering</string>
-       </property>
-      </widget>
-     </item>
-     <item>
+     <item row="0" column="0">
       <widget class="QPushButton" name="showWebcam">
        <property name="text">
         <string>Webcam</string>
        </property>
       </widget>
      </item>
-     <item>
+     <item row="1" column="7">
+      <widget class="QPushButton" name="clearImages">
+       <property name="text">
+        <string>clear</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="7">
+      <widget class="QPushButton" name="reload">
+       <property name="text">
+        <string>reload</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="cutaAndPerspective">
+       <property name="text">
+        <string>Cut and Perspective</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="6">
+      <widget class="QPushButton" name="loadPicture">
+       <property name="text">
+        <string>load </string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="filtering">
+       <property name="text">
+        <string>Filtering</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Images:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="6">
+      <widget class="QPushButton" name="savePictures">
+       <property name="text">
+        <string>save</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>OCR:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
       <widget class="QPushButton" name="showKinect">
        <property name="autoFillBackground">
         <bool>false</bool>
@@ -114,43 +163,10 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget_2">
-    <property name="geometry">
-     <rect>
-      <x>410</x>
-      <y>530</y>
-      <width>303</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QPushButton" name="loadPicture">
+     <item row="2" column="3">
+      <widget class="QPushButton" name="locating">
        <property name="text">
-        <string>load </string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="savePictures">
-       <property name="text">
-        <string>save</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="reload">
-       <property name="text">
-        <string>reload</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="clearImages">
-       <property name="text">
-        <string>clear</string>
+        <string>Locating</string>
        </property>
       </widget>
      </item>
@@ -158,8 +174,7 @@
    </widget>
    <zorder>layoutWidget</zorder>
    <zorder>scrollArea</zorder>
-   <zorder>horizontalLayoutWidget</zorder>
-   <zorder>horizontalLayoutWidget_2</zorder>
+   <zorder>gridLayoutWidget</zorder>
   </widget>
  </widget>
  <resources/>
