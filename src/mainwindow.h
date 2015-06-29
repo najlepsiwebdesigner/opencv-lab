@@ -9,6 +9,7 @@
 // app
 #include "webcam.h"
 #include "imageoperations.h"
+#include "idocr.h"
 
 // cv
 #include "opencv2/opencv.hpp"
@@ -80,7 +81,6 @@ private:
     void redrawImages();
     void loadImage(string filename);
     void saveImage(string fileName, const Mat &image);
-
 
 
 private slots:

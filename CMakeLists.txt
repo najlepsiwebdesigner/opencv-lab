@@ -37,6 +37,8 @@ set(SOURCE_FILES
     src/myfreenectdevice.cpp
     src/imageoperations.h
     src/imageoperations.cpp
+    src/idOCR.h
+    src/idOCR.cpp
 )
 
 if (WIN32)

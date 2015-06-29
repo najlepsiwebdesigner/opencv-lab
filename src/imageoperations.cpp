@@ -687,21 +687,18 @@ void ImageOperations::gaussian(Mat & image) {
 
 
 void ImageOperations::thresholdAdaptive(Mat & image) {
-    Mat dst;
-    cv::cvtColor(image,dst , CV_RGB2GRAY);
-    cv::adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
-    cv::cvtColor(dst,image, CV_GRAY2RGB);
+    cv::cvtColor(image,image , CV_RGB2GRAY);
+    cv::adaptiveThreshold(image, image, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 0);
+    cv::cvtColor(image,image, CV_GRAY2RGB);
 }
 
 void ImageOperations::thresholdGray(Mat & image) {
-    Mat dst;
-    cv::cvtColor(image,dst , CV_RGB2GRAY);
-    cv::threshold(dst,dst,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
-    cv::cvtColor(dst,image, CV_GRAY2RGB);
+    cv::cvtColor(image,image , CV_RGB2GRAY);
+    cv::threshold(image,image,0,255,THRESH_TOZERO + CV_THRESH_OTSU);
+    cv::cvtColor(image,image, CV_GRAY2RGB);
 }
 
 void ImageOperations::thresholdBinary(Mat & image) {
-    Mat dst;
     cv::cvtColor(image,image, CV_RGB2GRAY);
     cv::threshold(image,image,0,255,THRESH_BINARY + CV_THRESH_OTSU);
     cv::cvtColor(image,image, CV_GRAY2RGB);
