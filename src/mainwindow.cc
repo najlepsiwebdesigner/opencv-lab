@@ -92,9 +92,9 @@ void MainWindow::dropEvent(QDropEvent *ev) {
 void MainWindow::loadImage(string filename) {
     if (exists(filename)){
         Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
-//        cvtColor(src, src, CV_BGR2RGB);
-        Mat dst(Size(640,480),CV_8UC3,Scalar(0));
-        ImageOperations::fitImage(src, dst, 640, 480);
+
+        Mat dst(Size(1920,1440),CV_8UC3,Scalar(0));
+        ImageOperations::fitImage(src, dst, 1920, 1440);
 
         loadedImages.push_back(dst);
     }
@@ -162,8 +162,12 @@ void MainWindow::redrawImages() {
     for (int i = 0; i<loadedImages.size(); i=i+1){
         for (int j = 0; j<1; j++){
             QLabel *picLabel = new QLabel();
-//            cvtColor(loadedImages[i+j],loadedImages[i+j],CV_BGR2RGB);
-            pix = cvMatToQPixmap(loadedImages[i+j]);
+
+
+            Mat img(Size(640,480),CV_8UC3,Scalar(0));
+            ImageOperations::fitImage(loadedImages[i+j], img, 640, 480);
+
+            pix = cvMatToQPixmap(img);
 
             picLabel->setPixmap(pix);
             picLabel->setFixedWidth(640);
@@ -475,7 +479,11 @@ void MainWindow::locating() {
 
 
     for (int i = 0; i < loadedImages.size(); i++){
-        Mat image = loadedImages[i].clone();
+//        Mat image = loadedImages[i].clone();
+
+
+        Mat image(Size(640,480),CV_8UC3,Scalar(0));
+        ImageOperations::fitImage(loadedImages[i], image, 640, 480);
 
         ImageOperations::gaussian(image);
         ImageOperations::resizedownup(image);
@@ -564,8 +572,8 @@ void MainWindow::locating() {
 
             vector<LineCluster> clusters;
 
-            int distanceThreshold = 30;
-            double angleThreshold = 0.10;
+            int distanceThreshold = round(image.cols/10);
+            double angleThreshold = 0.80;
 
                 // create first group
                 LineCluster cluster;
