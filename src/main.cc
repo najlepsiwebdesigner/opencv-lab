@@ -1,9 +1,11 @@
 #include <QApplication>
 #include <iostream>
+
 #include "mainwindow.h"
 
 
-using namespace std;
+
+//using namespace std;
 using namespace cv;
 
 

@@ -27,6 +27,13 @@ include_directories("/usr/local/include/libfreenect")
 include_directories("/usr/local/include/libusb-1.0")
 include_directories( ${Boost_INCLUDE_DIRS} )
 
+
+# tesseract ocr
+    #include_directories("/usr/local/Cellar/leptonica/1.71_1/include")
+    #link_directories("/usr/local/Cellar/leptonica/1.71_1/lib")
+include_directories("/usr/local/Cellar/tesseract/3.02.02_3/include")
+link_directories ("/usr/local/Cellar/tesseract/3.02.02_3/lib")
+
 set(SOURCE_FILES
     src/main.cc
     src/mainwindow.h
@@ -71,7 +78,7 @@ add_executable(${PROJECT} MACOSX_BUNDLE
 target_link_libraries(${PROJECT} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT} ${OpenCV_LIBS})
 target_link_libraries(${PROJECT} "freenect")
-
+target_link_libraries(${PROJECT} "tesseract")
 
 
 

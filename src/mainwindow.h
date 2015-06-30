@@ -1,15 +1,19 @@
 #ifndef mainwindow_h
 #define mainwindow_h
 
+// app
+#include "idocr.h"
+#include "webcam.h"
+#include "imageoperations.h"
+
+
+
 // std
 #include <iostream>
 #include <string.h>
 #include <map>
 
-// app
-#include "webcam.h"
-#include "imageoperations.h"
-#include "idocr.h"
+
 
 // cv
 #include "opencv2/opencv.hpp"

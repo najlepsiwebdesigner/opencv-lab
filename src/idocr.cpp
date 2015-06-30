@@ -1,11 +1,12 @@
 #include "idocr.h"
 
+
 using namespace cv;
 using namespace std;
 
 idOCR::idOCR()
 {
-
+    tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 }
 
 idOCR::~idOCR()
@@ -113,7 +114,7 @@ void idOCR::process(Mat & image) {
         cv::dilate(image_vga, image_vga, Mat(), Point(-1, -1), 1, 1, 1);
         cv::erode(image_vga, image_vga, shape, Point(-1,-1), 1);
 
-    // fill biggest contour in the image to get rid of rest of structures inside
+    // keep only filled biggest contour in the image to get rid of rest of structures inside
         int largest_area=0;
         int largest_contour_index=0;
 
@@ -140,6 +141,7 @@ void idOCR::process(Mat & image) {
         cv::Canny(image_vga, image_vga, 30, 90);
         cv::dilate(image_vga, image_vga, Mat(), Point(1,-1));
 
+        // detect lines in this binary image
         std::vector<cv::Vec4i> lines;
         cv::HoughLinesP(image_vga, lines, 1, CV_PI/360,50,50, 10);
 
@@ -262,10 +264,6 @@ void idOCR::process(Mat & image) {
                 }
             }
 
-
-
-
-
           if (clusters.size() == 4) {
 
             std::vector<cv::Vec4i> clusteredLines;
@@ -373,12 +371,8 @@ void idOCR::process(Mat & image) {
 
                 image = newImage.clone();
                 return;
-
             }
-
           }
-
-
         }
 
         double alpha = 0.5; double beta;
@@ -387,6 +381,8 @@ void idOCR::process(Mat & image) {
 
         image = image_vga.clone();
 }
+
+
 
 
 bool idOCR::getIntersectionPoint(cv::Point a1, cv::Point a2, cv::Point b1, cv::Point b2, cv::Point2f & intPnt){
