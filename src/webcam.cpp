@@ -1,5 +1,5 @@
 #include "webcam.h"
-
+#include "idocr.h"
 
 using namespace std;
 using namespace cv;
@@ -90,11 +90,9 @@ void Webcam::showRGB() {
     while(1){ //Create infinte loop for live streaming
 
         capture.read(frame); //Create image frames from capture
-        ImageOperations::fitImage(frame,frame,640,480);
-        ImageOperations::resizedownup(frame);
-        ImageOperations::thresholdGray(frame);
-        ImageOperations::thresholdBinary(frame);
-        ImageOperations::lines(frame);
+
+
+        idOCR::process(frame);
 
 
         imshow("Camera_Output", frame);   //Show image frames on created window
