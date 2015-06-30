@@ -42,6 +42,10 @@ void idOCR::process(Mat & image) {
     // for id filtering, we need only small version of image
         Mat image_vga(Size(640,480),CV_8UC3,Scalar(0));
         fitImage(image, image_vga, 640, 480);
+
+        Mat image_big(Size(1920,1440),CV_8UC3,Scalar(0));
+        fitImage(image, image_big, 1920, 1440);
+
         Mat image_vga_backup = image_vga.clone();
 
     // filtering
@@ -124,19 +128,22 @@ void idOCR::process(Mat & image) {
             if(a>largest_area){
                 largest_area=a;
                 largest_contour_index=i;
-                drawContours( image_vga, contours,i, Scalar(0,0,0), -1, 8, hierarchy, 0);
             }
         }
 
-        drawContours( image_vga, contours,largest_contour_index, Scalar(255,0,0), -1, 8, hierarchy, 0);
+        Mat temp(Size(image_vga.cols,image_vga.rows),CV_8UC3,Scalar(0));
+
+        drawContours( temp, contours,largest_contour_index, Scalar(255,0,0), -1, 8, hierarchy, 0);
+
+        image_vga = temp;
 
         cv::Canny(image_vga, image_vga, 30, 90);
         cv::dilate(image_vga, image_vga, Mat(), Point(1,-1));
 
-
         std::vector<cv::Vec4i> lines;
-        cv::HoughLinesP(image_vga, lines, 1, CV_PI/360,50,image_vga.cols/10, (image_vga.cols/10)/5);
+        cv::HoughLinesP(image_vga, lines, 1, CV_PI/360,50,50, 10);
 
+        cvtColor( image_vga, image_vga, COLOR_GRAY2RGB);
 
         // clusterize lines
             // define lines around image
@@ -190,8 +197,8 @@ void idOCR::process(Mat & image) {
         if (lines.size() > 3){
 
         // clusterization params
-            int distanceThreshold = round(image.cols/10);
-            double angleThreshold = 0.30;
+            int distanceThreshold = round(image.cols/15);
+            double angleThreshold = 0.50;
 
             struct LineCluster {
                 int sumX1;
@@ -255,11 +262,11 @@ void idOCR::process(Mat & image) {
                 }
             }
 
-          cvtColor( image_vga, image_vga, COLOR_GRAY2RGB);
-
-          if (clusters.size() > 3) {
 
 
+
+
+          if (clusters.size() == 4) {
 
             std::vector<cv::Vec4i> clusteredLines;
 
@@ -302,71 +309,83 @@ void idOCR::process(Mat & image) {
                         && intersection.x < image_vga.cols
                         && intersection.y < image_vga.rows){
                         corners.push_back(intersection);
+                        cv::circle(image_vga, intersection, 3, CV_RGB(0,0,255), 2);
                     }
-
-                    cv::circle(image_vga, intersection, 3, CV_RGB(0,0,255), 2);
                 }
             }
 
-            // compute center of shape
-            cv::Point2f center(0,0);
 
-            for (int i = 0; i < corners.size(); i++)
-                center += corners[i];
-            center *= (1. / corners.size());
+            if (corners.size() == 4) {
 
-            cv::circle(image_vga, center, 3, CV_RGB(255,255,0), 2);
+                cv::Point2f center(0,0);
+
+                for (int i = 0; i < corners.size(); i++) {
+                    center.x += corners[i].x;
+                    center.y += corners[i].y;
+                }
+                center *= (1. / corners.size());
 
 
+                for (int i = 0; i < corners.size(); i++) {
+                    cv::circle(image_vga, corners[i], 3, CV_RGB(0,0,255), 2);
+                }             
 
+                idOCR::sortCorners(corners, center);
+
+                // Define the destination image
+                cv::Mat quad = cv::Mat::zeros(510, 800, CV_8UC3);
+
+                // Corners of the destination image
+                std::vector<cv::Point2f> quad_pts;
+                quad_pts.push_back(cv::Point2f(0, 0));
+                quad_pts.push_back(cv::Point2f(quad.cols, 0));
+                quad_pts.push_back(cv::Point2f(quad.cols, quad.rows));
+                quad_pts.push_back(cv::Point2f(0, quad.rows));
+
+                double ratio_x = round(static_cast<double>(image_big.cols) / image_vga_backup.cols);
+                double ratio_y = round(static_cast<double>(image_big.rows) / image_vga_backup.rows);
+
+                for (int i = 0; i < corners.size(); i++) {
+                    corners[i].x *= ratio_x;
+                    corners[i].y *= ratio_y;
+                }
+
+                try {
+                    // Get transformation matrix
+                    cv::Mat transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+
+                    // Apply perspective transformation
+                    cv::warpPerspective(image_big, quad, transmtx, quad.size(),INTER_LINEAR,BORDER_TRANSPARENT);
+                }
+                catch (cv::Exception e) {
+//                    qDebug << "error in warp" << endl;
+                }
+
+
+                cv::Mat newImage = cv::Mat::zeros(600, 800, CV_8UC3);
+                cv::Mat tempImage = cv::Mat::zeros(600, 800, CV_8UC3);
+
+                quad.copyTo(newImage.rowRange(0,quad.rows).colRange(0,quad.cols));
+
+                cv::GaussianBlur(newImage, tempImage, cv::Size(0, 0),5);
+                cv::addWeighted(newImage, 1.5, tempImage, -0.5, 0, newImage);
+
+
+                image = newImage.clone();
+                return;
+
+            }
 
           }
 
-          double alpha = 0.5; double beta;
-          beta = ( 1.0 - alpha );
-          addWeighted(image_vga_backup , alpha, image_vga, beta, 0.0, image_vga);
+
         }
 
+        double alpha = 0.5; double beta;
+        beta = ( 1.0 - alpha );
+        addWeighted(image_vga_backup , alpha, image_vga, beta, 0.0, image_vga);
 
-
-
-    image = image_vga.clone();
-
-
-//        if (corners.size() == 4) {
-
-//            cv::Point2f center(0,0);
-
-//            for (int i = 0; i < corners.size(); i++)
-//                center += corners[i];
-//            center *= (1. / corners.size());
-
-
-//            ImageOperations::sortCorners(corners, center);
-//            cv::circle(dst, center, 3, CV_RGB(255,255,0), 2);
-
-//            // Define the destination image
-//            cv::Mat quad = cv::Mat::zeros(420, 640, CV_8UC3);
-
-//            // Corners of the destination image
-//            std::vector<cv::Point2f> quad_pts;
-//            quad_pts.push_back(cv::Point2f(0, 0));
-//            quad_pts.push_back(cv::Point2f(quad.cols, 0));
-//            quad_pts.push_back(cv::Point2f(quad.cols, quad.rows));
-//            quad_pts.push_back(cv::Point2f(0, quad.rows));
-
-//            // Get transformation matrix
-//            cv::Mat transmtx = cv::getPerspectiveTransform(corners, quad_pts);
-
-//            // Apply perspective transformation
-//            cv::warpPerspective(image,quad, transmtx, quad.size(),INTER_LINEAR,BORDER_TRANSPARENT);
-
-//            cv::Mat newImage = cv::Mat::zeros(480, 640, CV_8UC3);
-
-//            quad.copyTo(newImage.rowRange(0,quad.rows).colRange(0,quad.cols));
-
-//            image = newImage.clone();
-//        }
+        image = image_vga.clone();
 }
 
 
@@ -384,7 +403,40 @@ bool idOCR::getIntersectionPoint(cv::Point a1, cv::Point a2, cv::Point b1, cv::P
     return true;
 }
 
+
+
+
 double idOCR::cross(Point v1,Point v2){
 
     return v1.x*v2.y - v1.y*v2.x;
+}
+
+
+
+void idOCR::sortCorners(std::vector<cv::Point2f>& corners,
+                 cv::Point2f center)
+{
+    std::vector<cv::Point2f> top, bot;
+
+    for (int i = 0; i < corners.size(); i++)
+    {
+        if (corners[i].y < center.y)
+            top.push_back(corners[i]);
+        else
+            bot.push_back(corners[i]);
+    }
+    corners.clear();
+
+    if (top.size() == 2 && bot.size() == 2){
+        cv::Point2f tl = top[0].x > top[1].x ? top[1] : top[0];
+        cv::Point2f tr = top[0].x > top[1].x ? top[0] : top[1];
+        cv::Point2f bl = bot[0].x > bot[1].x ? bot[1] : bot[0];
+        cv::Point2f br = bot[0].x > bot[1].x ? bot[0] : bot[1];
+
+
+        corners.push_back(tl);
+        corners.push_back(tr);
+        corners.push_back(br);
+        corners.push_back(bl);
+    }
 }

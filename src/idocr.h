@@ -18,6 +18,7 @@ public:
 
     void static fitImage(const cv::Mat & src, cv::Mat & dst, float destWidth, float destHeight);
     bool static getIntersectionPoint(cv::Point a1, cv::Point a2, cv::Point b1, cv::Point b2, cv::Point2f &intPnt);
+    void static sortCorners(std::vector<cv::Point2f>& corners,cv::Point2f center);
     void static process(cv::Mat & image);
     double static cross(cv::Point v1,cv::Point v2);
 };
