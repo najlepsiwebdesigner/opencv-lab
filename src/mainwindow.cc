@@ -26,7 +26,12 @@ MainWindow::MainWindow(QWidget *parent)
          << "Erode"
          << "Dilate"
          << "BiggestContour"
-         << "ConvexHull";
+         << "ConvexHull"
+         << "CutoutFront"
+         << "CutoutBack"
+         << "MaskFront"
+         << "MaskBack"
+         << "Contours";
 
     operationsMap.insert(FunctionMap::value_type("equalize",ImageOperations::equalize));
     operationsMap.insert(FunctionMap::value_type("lines",ImageOperations::lines));
@@ -45,6 +50,11 @@ MainWindow::MainWindow(QWidget *parent)
     operationsMap.insert(FunctionMap::value_type("Dilate",ImageOperations::dilation));
     operationsMap.insert(FunctionMap::value_type("BiggestContour",ImageOperations::biggestContour));
     operationsMap.insert(FunctionMap::value_type("ConvexHull",ImageOperations::convexH));
+    operationsMap.insert(FunctionMap::value_type("CutoutFront",ImageOperations::cutOutFront));
+    operationsMap.insert(FunctionMap::value_type("CutoutBack",ImageOperations::cutOutBack));
+    operationsMap.insert(FunctionMap::value_type("MaskFront",ImageOperations::maskFront));
+    operationsMap.insert(FunctionMap::value_type("MaskBack",ImageOperations::maskBack));
+    operationsMap.insert(FunctionMap::value_type("Contours",ImageOperations::contours));
 
     operationsModel = new QStringListModel(this);
     operationsModel->setStringList(List);
@@ -65,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->filtering, SIGNAL(clicked()), this, SLOT(filtering()));
     connect(ui->locating, SIGNAL(clicked()), this, SLOT(locating()));
     connect(ui->cutaAndPerspective, SIGNAL(clicked()), this, SLOT(cutAndPerspective()));
+    connect(ui->setWebcamScreenshotPath, SIGNAL(clicked()), this, SLOT(setWebcamScreenshotPath()));
 
     connect(ui->operationsList, SIGNAL(doubleClicked(QModelIndex)),this,SLOT(itemDblClicked(QModelIndex)));
 }
@@ -100,6 +111,8 @@ void MainWindow::loadImage(string filename) {
     }
 }
 
+
+
 void MainWindow::reloadImages(){
     clearImages();
     QString filename;
@@ -114,8 +127,14 @@ void MainWindow::reloadImages(){
 }
 
 
+void MainWindow::closing() {
+    cv::destroyAllWindows();
+}
+
+
 void MainWindow::showWebcam() {
     Webcam cam;
+    cam.setScreenshotPath(getWebcamScreenshotPath());
     cam.showRGB();
 }
 
@@ -143,8 +162,6 @@ void MainWindow::clearImages() {
 
 void MainWindow::saveImage(string fileName, const Mat & image){
     if (fileName.length() < 1) return;
-
-    cvtColor(image, image, CV_BGR2RGB);
     imwrite(fileName, image);
     cout << "File saved!" << endl;
 }
@@ -153,6 +170,16 @@ void MainWindow::saveImage(string fileName, const Mat & image){
 void MainWindow::openImage(){
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),".",tr("Images (*.png *.jpg)"));
     loadImage(fileName.toStdString());
+}
+
+void MainWindow::setWebcamScreenshotPath() {
+    QString dirName = QFileDialog::getExistingDirectoryUrl(this,tr("Open directory")).toString();
+    dirName.replace(QString("file://"), QString(""));
+    ui->webcamScreenshotPath->setText(dirName);
+}
+
+string MainWindow::getWebcamScreenshotPath() {
+    return ui->webcamScreenshotPath->text().toStdString();
 }
 
 

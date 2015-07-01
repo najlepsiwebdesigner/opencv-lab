@@ -40,22 +40,15 @@ void Webcam::showKinectRGB() {
         MyFreenectDevice& device = freenect.createDevice<MyFreenectDevice>(0);
 
         namedWindow("rgb",CV_WINDOW_AUTOSIZE);
-/*        namedWindow("thresholded",CV_WINDOW_AUTOSIZE);
-        namedWindow("processed",CV_WINDOW_AUTOSIZE);
-        namedWindow("squares",CV_WINDOW_AUTOSIZE/);*/
 
         device.startVideo();
         while (!die) {
             device.getVideo(rgbMat);
-//            findSquares(rgbMat, squares);
             cv::imshow("rgb", rgbMat);
 
             char k = cvWaitKey(5);
             if( k == 27 ){
                 cvDestroyWindow("rgb");
-//                cvDestroyWindow("processed");
-//                cvDestroyWindow("thresholded");
-//                cvDestroyWindow("squares");
                 break;
             }
             if( k == 8 ) {
@@ -77,30 +70,48 @@ void Webcam::showKinectRGB() {
 
 
 void Webcam::showRGB() {
-    namedWindow("Camera_Output", 1);    //Create window
+    namedWindow("Camera_Output", 1);
     int cap = CV_CAP_ANY;
 //    if (cap == 0){
 //        cap = 1;
 //    }
-    VideoCapture capture = VideoCapture(cap);  //Capture using any camera connected to your system
+    VideoCapture capture = VideoCapture(cap);
     char key;
-
     Mat frame;
 
-    while(1){ //Create infinte loop for live streaming
+    while(1){
+        string timestamp = boost::posix_time::to_iso_string(boost::posix_time::microsec_clock::local_time()) + ".jpg";
+        capture.read(frame);
 
-        capture.read(frame); //Create image frames from capture
-
+        string filename = getScreenshotPath() + timestamp;
 
         idOCR::process(frame);
 
+        imshow("Camera", frame);
 
-        imshow("Camera_Output", frame);   //Show image frames on created window
-        key = cvWaitKey(10);     //Capture Keyboard stroke
+        key = cvWaitKey(10);
+
         if (char(key) == 27){
-            break;      //If you hit ESC key loop will break.
+            break;      // esc
+        } else if (char(key) == 32) { // space
+            idOCR::saveImage(filename, frame);
+            idOCR::maskCutOut(frame, "front.png");
         }
+
     }
-    capture.release();//Release capture.
-    destroyWindow("Camera_Output"); //Destroy Window
+    capture.release();
+    cv::destroyAllWindows();
+}
+
+
+
+void Webcam::setScreenshotPath(std::string path) {
+    this->screenshotPath = path;
+}
+
+std::string Webcam::getScreenshotPath() {
+    if (this->screenshotPath.length() > 0){
+       return this->screenshotPath + "/";
+    }
+    return "";
 }

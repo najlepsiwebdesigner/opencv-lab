@@ -22,6 +22,11 @@ public:
     void static sortCorners(std::vector<cv::Point2f>& corners,cv::Point2f center);
     void static process(cv::Mat & image);
     double static cross(cv::Point v1,cv::Point v2);
+    void static saveImage(std::string fileName, const cv::Mat & image);
+    std::vector<cv::Rect> static getRectanglesFromMask(cv::Mat & mask);
+
+    void static maskCutOut(cv::Mat & image, std::string);
+
 };
 
 #endif // IDOCR_H

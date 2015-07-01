@@ -75,6 +75,8 @@ public:
     MainWindow(QWidget *parent = 0);
     virtual ~MainWindow();
 
+    string getWebcamScreenshotPath();
+
 protected:
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
@@ -100,6 +102,8 @@ private slots:
     void filtering();
     void locating();
     void cutAndPerspective();
+    void setWebcamScreenshotPath();
+    void closing();
 };
 
 

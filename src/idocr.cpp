@@ -15,6 +15,15 @@ idOCR::~idOCR()
 }
 
 
+void idOCR::saveImage(string fileName, const Mat & image){
+    if (fileName.length() < 1) return;
+
+    imwrite(fileName, image);
+    cout << "File saved!" << endl;
+}
+
+
+
 void idOCR::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
     int srcWidth = src.cols;
     int srcHeight = src.rows;
@@ -436,3 +445,55 @@ void idOCR::sortCorners(std::vector<cv::Point2f>& corners,
         corners.push_back(bl);
     }
 }
+
+
+
+vector<Rect> idOCR::getRectanglesFromMask(Mat & mask) {
+    Mat canny;
+    Mat image_gray;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+
+    cvtColor( mask, image_gray, CV_RGB2GRAY );
+    Canny( image_gray, canny, 30, 90);
+    findContours( canny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+
+    vector<Rect> boundRect( contours.size() );
+
+    for( int i = 0; i< contours.size(); i++ )
+    {
+        boundRect[i] = boundingRect( Mat(contours[i]) );
+    }
+
+    return boundRect;
+}
+
+
+
+
+void idOCR::maskCutOut(Mat & image, string maskFilename) {
+    Mat mask = imread(maskFilename);
+
+    fitImage(image, image, 800, 600);
+
+    vector<Rect> rectangles = getRectanglesFromMask(mask);
+
+    for( int i = 0; i< rectangles.size(); i++ )
+    {
+       Mat roi(image, rectangles[i]);
+
+       cv::cvtColor(roi,roi, CV_RGB2GRAY);
+       cv::threshold(roi,roi,0,255,THRESH_BINARY + CV_THRESH_OTSU);
+       cv::cvtColor(roi,roi, CV_GRAY2RGB);
+
+       saveImage("cutout/" + to_string(i) +  ".jpg", roi);
+    }
+
+    double alpha = 0.5; double beta;
+    beta = ( 1.0 - alpha );
+    addWeighted(image , alpha, mask, beta, 0.0, image);
+
+}
+
+

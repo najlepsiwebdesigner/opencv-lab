@@ -1,5 +1,6 @@
 #include "imageoperations.h"
 
+using namespace cv;
 
 ImageOperations::ImageOperations()
 {
@@ -909,4 +910,96 @@ void ImageOperations::convexH(Mat & image) {
 
     drawContours( image, contours, largest_contour_index, Scalar(255,255,0), 1, 8, vector<Vec4i>(), 0, Point() );
     drawContours( image, hull, 0, Scalar(255,255,0), 1, 8, vector<Vec4i>(), 0, Point() );
+}
+
+
+
+
+void ImageOperations::maskFront(Mat & image) {
+    maskOverlay(image, "front.png");
+}
+
+
+
+
+void ImageOperations::maskBack(Mat & image) {
+    maskOverlay(image, "back.png");
+}
+
+
+void ImageOperations::cutOutFront(Mat & image) {
+    idOCR::maskCutOut(image, "front.png");
+}
+
+
+
+
+void ImageOperations::cutOutBack(Mat & image) {
+    idOCR::maskCutOut(image, "back.png");
+}
+
+
+
+
+vector<Rect> ImageOperations::getRectanglesFromMask(Mat & mask) {
+    Mat canny;
+    Mat image_gray;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+
+    cvtColor( mask, image_gray, CV_RGB2GRAY );
+    Canny( image_gray, canny, 30, 90);
+    findContours( canny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+    vector<Rect> boundRect( contours.size() );
+
+    for( int i = 0; i< contours.size(); i++ )
+    {
+        boundRect[i] = boundingRect( Mat(contours[i]) );
+    }
+
+    return boundRect;
+}
+
+
+
+
+
+void ImageOperations::contours(Mat & image) {
+    Mat canny;
+    Mat image_gray;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+    RNG rng(12345);
+
+    cvtColor( image, image_gray, CV_RGB2GRAY );
+    Canny( image_gray, canny, 30, 90);
+    findContours( canny, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+    vector<Rect> boundRect( contours.size() );
+
+    Mat output = Mat::zeros( canny.size(), CV_8UC3 );
+    for( int i = 0; i< contours.size(); i++ )
+    {
+        Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255));
+//        drawContours( output, contours, i, color, 2, 8, hierarchy, 0, Point() );
+
+        boundRect[i] = boundingRect( Mat(contours[i]) );
+        rectangle( output, boundRect[i].tl(), boundRect[i].br(), color,-1, 8, 0 );
+    }
+
+    image = output.clone();
+
+}
+
+
+
+void ImageOperations::maskOverlay(Mat & image, string maskFilename) {
+    Mat mask = imread(maskFilename);
+
+    fitImage(image, image, 800, 600);
+
+    double alpha = 0.5; double beta;
+    beta = ( 1.0 - alpha );
+    addWeighted(image , alpha, mask, beta, 0.0, image);
 }

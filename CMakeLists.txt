@@ -8,7 +8,6 @@ ADD_DEFINITIONS(
     # Other flags
 )
 
-
 set(PROJECT "idOCR")
 
 project(${PROJECT})
@@ -19,7 +18,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets REQUIRED)
 find_package( OpenCV REQUIRED )
-find_package( Boost COMPONENTS system filesystem REQUIRED)
+find_package( Boost COMPONENTS system filesystem date_time REQUIRED)
 
 
 # libfreenect support
@@ -29,8 +28,6 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 
 
 # tesseract ocr
-    #include_directories("/usr/local/Cellar/leptonica/1.71_1/include")
-    #link_directories("/usr/local/Cellar/leptonica/1.71_1/lib")
 include_directories("/usr/local/Cellar/tesseract/3.02.02_3/include")
 link_directories ("/usr/local/Cellar/tesseract/3.02.02_3/lib")
 
@@ -79,8 +76,6 @@ target_link_libraries(${PROJECT} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT} ${OpenCV_LIBS})
 target_link_libraries(${PROJECT} "freenect")
 target_link_libraries(${PROJECT} "tesseract")
-
-
 
 
 set(MACOSX_BUNDLE_BUNDLE_NAME "idOCR")
