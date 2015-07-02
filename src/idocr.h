@@ -11,11 +11,15 @@
 #include "opencv2/nonfree/features2d.hpp"
 #include <iostream>
 
+#include <boost/filesystem.hpp>
+
 class idOCR
 {
 public:
     idOCR();
     ~idOCR();
+
+    std::string static cutoutPath;
 
     void static fitImage(const cv::Mat & src, cv::Mat & dst, float destWidth, float destHeight);
     bool static getIntersectionPoint(cv::Point a1, cv::Point a2, cv::Point b1, cv::Point b2, cv::Point2f &intPnt);
@@ -26,6 +30,9 @@ public:
     std::vector<cv::Rect> static getRectanglesFromMask(cv::Mat & mask);
 
     void static maskCutOut(cv::Mat & image, std::string);
+    void static setCutoutPath(std::string path);
+    std::string static getCutoutPath();
+
 
 };
 

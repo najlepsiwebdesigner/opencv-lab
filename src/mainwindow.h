@@ -50,7 +50,6 @@ using namespace boost::filesystem;
 namespace Ui
 {
     class MainWindow;
-
 }
 
 typedef void (*FunctionPointer)(Mat & image);
@@ -76,6 +75,7 @@ public:
     virtual ~MainWindow();
 
     string getWebcamScreenshotPath();
+    string getCutoutPath();
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e);
@@ -103,7 +103,10 @@ private slots:
     void locating();
     void cutAndPerspective();
     void setWebcamScreenshotPath();
+    void setCutoutPath();
     void closing();
+    void cutOutFront();
+    void cutOutBack();
 };
 
 

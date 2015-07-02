@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>954</width>
-    <height>663</height>
+    <height>694</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,7 +54,7 @@
       <x>720</x>
       <y>10</y>
       <width>231</width>
-      <height>651</height>
+      <height>681</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -156,6 +156,20 @@
        </property>
       </widget>
      </item>
+     <item row="2" column="4">
+      <widget class="QPushButton" name="cutoutFront">
+       <property name="text">
+        <string>cuOutFront</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="5">
+      <widget class="QPushButton" name="cutoutBack">
+       <property name="text">
+        <string>cutOutBack</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
    <widget class="QWidget" name="horizontalLayoutWidget">
@@ -190,10 +204,43 @@
      </item>
     </layout>
    </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>660</y>
+      <width>701</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QPushButton" name="setCutoutPath">
+       <property name="maximumSize">
+        <size>
+         <width>120</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>CutOutPath</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="cutoutPath">
+       <property name="text">
+        <string>cutouts will be saved in app directory</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
    <zorder>layoutWidget</zorder>
    <zorder>scrollArea</zorder>
    <zorder>gridLayoutWidget</zorder>
    <zorder>horizontalLayoutWidget</zorder>
+   <zorder>horizontalLayoutWidget_2</zorder>
   </widget>
  </widget>
  <resources/>

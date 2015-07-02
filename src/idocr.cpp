@@ -4,6 +4,11 @@
 using namespace cv;
 using namespace std;
 
+
+string idOCR::cutoutPath = "";
+
+
+
 idOCR::idOCR()
 {
     tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
@@ -473,6 +478,15 @@ vector<Rect> idOCR::getRectanglesFromMask(Mat & mask) {
 
 
 void idOCR::maskCutOut(Mat & image, string maskFilename) {
+
+    if ( !boost::filesystem::exists( maskFilename ) )
+    {
+        std::cout << "Can't find mask file!" << std::endl;
+        boost::filesystem::path full_path( boost::filesystem::current_path() );
+        std::cout << "Current path is : " << full_path << std::endl;
+        return;
+    }
+
     Mat mask = imread(maskFilename);
 
     fitImage(image, image, 800, 600);
@@ -487,7 +501,12 @@ void idOCR::maskCutOut(Mat & image, string maskFilename) {
        cv::threshold(roi,roi,0,255,THRESH_BINARY + CV_THRESH_OTSU);
        cv::cvtColor(roi,roi, CV_GRAY2RGB);
 
-       saveImage("cutout/" + to_string(i) +  ".jpg", roi);
+       string path = getCutoutPath();
+       if (path.length() > 0) {
+           path = path + "/";
+       }
+
+       saveImage(path + to_string(i) +  ".jpg", roi);
     }
 
     double alpha = 0.5; double beta;
@@ -497,3 +516,10 @@ void idOCR::maskCutOut(Mat & image, string maskFilename) {
 }
 
 
+void idOCR::setCutoutPath(string path) {
+    cutoutPath = path;
+}
+
+string idOCR::getCutoutPath() {
+    return cutoutPath;
+}

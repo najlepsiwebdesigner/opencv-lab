@@ -30,8 +30,7 @@ public:
     void static dilation(Mat & image);
     void static biggestContour(Mat & image);
     void static convexH(Mat & image);
-    void static cutOutFront(Mat & image);
-    void static cutOutBack(Mat & image);
+
     void static maskFront(Mat & image);
     void static maskBack(Mat & image);
     void static contours(Mat & image);

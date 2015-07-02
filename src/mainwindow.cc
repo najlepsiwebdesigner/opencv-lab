@@ -27,8 +27,6 @@ MainWindow::MainWindow(QWidget *parent)
          << "Dilate"
          << "BiggestContour"
          << "ConvexHull"
-         << "CutoutFront"
-         << "CutoutBack"
          << "MaskFront"
          << "MaskBack"
          << "Contours";
@@ -50,8 +48,6 @@ MainWindow::MainWindow(QWidget *parent)
     operationsMap.insert(FunctionMap::value_type("Dilate",ImageOperations::dilation));
     operationsMap.insert(FunctionMap::value_type("BiggestContour",ImageOperations::biggestContour));
     operationsMap.insert(FunctionMap::value_type("ConvexHull",ImageOperations::convexH));
-    operationsMap.insert(FunctionMap::value_type("CutoutFront",ImageOperations::cutOutFront));
-    operationsMap.insert(FunctionMap::value_type("CutoutBack",ImageOperations::cutOutBack));
     operationsMap.insert(FunctionMap::value_type("MaskFront",ImageOperations::maskFront));
     operationsMap.insert(FunctionMap::value_type("MaskBack",ImageOperations::maskBack));
     operationsMap.insert(FunctionMap::value_type("Contours",ImageOperations::contours));
@@ -76,6 +72,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->locating, SIGNAL(clicked()), this, SLOT(locating()));
     connect(ui->cutaAndPerspective, SIGNAL(clicked()), this, SLOT(cutAndPerspective()));
     connect(ui->setWebcamScreenshotPath, SIGNAL(clicked()), this, SLOT(setWebcamScreenshotPath()));
+    connect(ui->setCutoutPath, SIGNAL(clicked()), this, SLOT(setCutoutPath()));
+    connect(ui->cutoutFront, SIGNAL(clicked()), this, SLOT(cutOutFront()));
+    connect(ui->cutoutBack, SIGNAL(clicked()), this, SLOT(cutOutBack()));
 
     connect(ui->operationsList, SIGNAL(doubleClicked(QModelIndex)),this,SLOT(itemDblClicked(QModelIndex)));
 }
@@ -180,6 +179,17 @@ void MainWindow::setWebcamScreenshotPath() {
 
 string MainWindow::getWebcamScreenshotPath() {
     return ui->webcamScreenshotPath->text().toStdString();
+}
+
+void MainWindow::setCutoutPath(){
+    QString dirName = QFileDialog::getExistingDirectoryUrl(this,tr("Open directory")).toString();
+    dirName.replace(QString("file://"), QString(""));
+    ui->cutoutPath->setText(dirName);
+    idOCR::setCutoutPath(dirName.toStdString());
+}
+
+string MainWindow::getCutoutPath() {
+    return ui->cutoutPath->text().toStdString();
 }
 
 
@@ -737,3 +747,40 @@ void MainWindow::cutAndPerspective() {
 
     redrawImages();
 }
+
+
+
+void MainWindow::cutOutFront() {
+
+    if (this->loadedImages.size() < 1) {
+        QMessageBox msgBox;
+        msgBox.setText("No images to process!");
+        msgBox.exec();
+        return;
+    }
+
+
+    for (int i = 0; i < loadedImages.size(); i++){
+        idOCR::maskCutOut(loadedImages[i], "front.png");
+    }
+
+
+}
+
+void MainWindow::cutOutBack() {
+
+    if (this->loadedImages.size() < 1) {
+        QMessageBox msgBox;
+        msgBox.setText("No images to process!");
+        msgBox.exec();
+        return;
+    }
+
+
+    for (int i = 0; i < loadedImages.size(); i++){
+        idOCR::maskCutOut(loadedImages[i], "back.png");
+    }
+
+}
+
+
