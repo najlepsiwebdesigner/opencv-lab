@@ -506,6 +506,7 @@ void idOCR::maskCutOut(Mat & image, string maskFilename) {
            path = path + "/";
        }
 
+       processField(roi);
        saveImage(path + to_string(i) +  ".jpg", roi);
     }
 
@@ -514,6 +515,91 @@ void idOCR::maskCutOut(Mat & image, string maskFilename) {
     addWeighted(image , alpha, mask, beta, 0.0, image);
 
 }
+
+
+void idOCR::processField(Mat & image) {
+    Mat original = image.clone();
+
+    cv::Mat const shape = cv::getStructuringElement(
+                  cv::MORPH_RECT, cv::Size(3, 1));
+
+    cvtColor(image, image, CV_RGB2GRAY);
+    cv::erode(image, image, shape);
+    cv::GaussianBlur(image, image, Size( 5, 5) ,5,5);
+    Size ksize(200,1);
+
+    blur(image, image, ksize,Point(-1,-1) );
+//    blur(image, image, ksize,Point(-1,-1) );
+//    blur(image, image, ksize,Point(-1,-1) );
+
+
+//    cv::erode(image, image, shape);
+//    cv::dilate(image,image,shape);
+
+    cv::threshold(image,image,250,255,THRESH_BINARY);
+
+//return;
+
+    int largest_area=0;
+    int largest_contour_index=0;
+
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+
+    // invert image
+    bitwise_not ( image, image );
+
+    findContours( image, contours, hierarchy,CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE ); // Find the contours in the image
+
+
+    cvtColor(image, image, CV_GRAY2RGB);
+
+
+    for( int i = 0; i< contours.size(); i++ )
+    {
+        double a=contourArea( contours[i],false);
+
+        if(a>largest_area){
+            largest_area=a;
+            largest_contour_index=i;
+        }
+    }
+
+
+    for( int i = 0; i< contours.size(); i++ )
+    {
+        if (i == largest_contour_index){
+
+            cv::Rect r;
+            r = boundingRect(contours[i]);
+            r.width = image.cols;
+
+            if (((image.rows - r.y) - r.height) > round(image.rows/2)) {
+                r.height = image.rows - r.y;
+            }
+
+            if (r.y + r.height > round(image.rows/2)) {
+                r.y = 0;
+                r.height = r.height + 2;
+            }
+
+
+            Mat mask = cvCreateMat(image.rows, image.cols, CV_8UC1);
+            mask.setTo(0);
+
+            rectangle(mask, r, Scalar(255, 255, 255), -1);
+
+            image.setTo(255);
+            original.copyTo(image, mask);
+            return;
+//            imshow("", mask);
+        }
+    }
+
+    image = original.clone();
+
+}
+
 
 
 void idOCR::setCutoutPath(string path) {

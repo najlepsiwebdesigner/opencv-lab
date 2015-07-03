@@ -267,6 +267,7 @@ bool ImageOperations::sortByLength(const cv::Vec4i &lineA, const cv::Vec4i &line
 
 
 void ImageOperations::fitImage(const Mat& src,Mat& dst, float destWidth, float destHeight) {
+
     int srcWidth = src.cols;
     int srcHeight = src.rows;
 
@@ -701,7 +702,7 @@ void ImageOperations::thresholdGray(Mat & image) {
 
 void ImageOperations::thresholdBinary(Mat & image) {
     cv::cvtColor(image,image, CV_RGB2GRAY);
-    cv::threshold(image,image,0,255,THRESH_BINARY + CV_THRESH_OTSU);
+    cv::threshold(image,image,250,255,THRESH_BINARY);
     cv::cvtColor(image,image, CV_GRAY2RGB);
 }
 
@@ -997,4 +998,63 @@ void ImageOperations::maskOverlay(Mat & image, string maskFilename) {
     double alpha = 0.5; double beta;
     beta = ( 1.0 - alpha );
     addWeighted(image , alpha, mask, beta, 0.0, image);
+}
+
+
+
+void ImageOperations::textLocalization(Mat &image) {
+        Mat large = image.clone();
+        Mat rgb;
+        // downsample and use it for processing
+        pyrDown(large, rgb);
+        Mat small;
+        cvtColor(rgb, small, CV_RGB2GRAY);
+        // morphological gradient
+        Mat grad;
+        Mat morphKernel = getStructuringElement(MORPH_ELLIPSE, Size(3, 3));
+        morphologyEx(small, grad, MORPH_GRADIENT, morphKernel);
+        // binarize
+        Mat bw;
+        threshold(grad, bw, 0.0, 255.0, THRESH_BINARY | THRESH_OTSU);
+        // connect horizontally oriented regions
+        Mat connected;
+        morphKernel = getStructuringElement(MORPH_RECT, Size(9, 1));
+        morphologyEx(bw, connected, MORPH_CLOSE, morphKernel);
+        // find contours
+        Mat mask = Mat::zeros(bw.size(), CV_8UC1);
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
+        findContours(connected, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+        // filter contours
+        for(int idx = 0; idx >= 0; idx = hierarchy[idx][0])
+        {
+            Rect rect = boundingRect(contours[idx]);
+            Mat maskROI(mask, rect);
+            maskROI = Scalar(0, 0, 0);
+            // fill the contour
+            drawContours(mask, contours, idx, Scalar(255, 255, 255), CV_FILLED);
+            // ratio of non-zero pixels in the filled region
+            double r = (double)countNonZero(maskROI)/(rect.width*rect.height);
+
+            if (r > .42 /* assume at least 45% of the area is filled if it contains text */
+                &&
+                (rect.height > 8 && rect.width > 8) /* constraints on region size */
+                /* these two conditions alone are not very robust. better to use something
+                like the number of significant peaks in a horizontal projection as a third condition */
+                )
+            {
+                rectangle(rgb, rect, Scalar(0, 255, 0), 2);
+            }
+        }
+
+        image = rgb.clone();
+}
+
+
+
+void ImageOperations::horizontalBlur(Mat & image) {
+
+    Size ksize(100,1);
+
+    blur(image, image, ksize,Point(-1,-1) );
 }

@@ -29,7 +29,9 @@ MainWindow::MainWindow(QWidget *parent)
          << "ConvexHull"
          << "MaskFront"
          << "MaskBack"
-         << "Contours";
+         << "Contours"
+         << "TextLocalization"
+         << "Horizontal Blur";
 
     operationsMap.insert(FunctionMap::value_type("equalize",ImageOperations::equalize));
     operationsMap.insert(FunctionMap::value_type("lines",ImageOperations::lines));
@@ -51,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent)
     operationsMap.insert(FunctionMap::value_type("MaskFront",ImageOperations::maskFront));
     operationsMap.insert(FunctionMap::value_type("MaskBack",ImageOperations::maskBack));
     operationsMap.insert(FunctionMap::value_type("Contours",ImageOperations::contours));
+    operationsMap.insert(FunctionMap::value_type("TextLocalization",ImageOperations::textLocalization));
+    operationsMap.insert(FunctionMap::value_type("Horizontal Blur",ImageOperations::horizontalBlur));
 
     operationsModel = new QStringListModel(this);
     operationsModel->setStringList(List);
@@ -75,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->setCutoutPath, SIGNAL(clicked()), this, SLOT(setCutoutPath()));
     connect(ui->cutoutFront, SIGNAL(clicked()), this, SLOT(cutOutFront()));
     connect(ui->cutoutBack, SIGNAL(clicked()), this, SLOT(cutOutBack()));
+    connect(ui->templateMatching, SIGNAL(clicked()), this, SLOT(templateMatching()));
 
     connect(ui->operationsList, SIGNAL(doubleClicked(QModelIndex)),this,SLOT(itemDblClicked(QModelIndex)));
 }
@@ -103,8 +108,15 @@ void MainWindow::loadImage(string filename) {
     if (exists(filename)){
         Mat src = imread(filename,CV_LOAD_IMAGE_COLOR);
 
-        Mat dst(Size(1920,1440),CV_8UC3,Scalar(0));
-        ImageOperations::fitImage(src, dst, 1920, 1440);
+        Mat dst;
+        int destWidth = 1920;
+        int destHeight = 1440;
+
+        if (destWidth > src.cols && destHeight > src.rows){
+            dst = src.clone();
+        } else {
+            ImageOperations::fitImage(src, dst, destWidth, destHeight);
+        }
 
         loadedImages.push_back(dst);
     }
@@ -200,15 +212,26 @@ void MainWindow::redrawImages() {
         for (int j = 0; j<1; j++){
             QLabel *picLabel = new QLabel();
 
+            int imgWidth = 640;
+            int imgHeight = 480;
 
-            Mat img(Size(640,480),CV_8UC3,Scalar(0));
-            ImageOperations::fitImage(loadedImages[i+j], img, 640, 480);
+            Mat img;
+
+            if (imgWidth > loadedImages[i].rows && imgHeight > loadedImages[i].cols){
+                img = loadedImages[i];
+                picLabel->setFixedWidth(loadedImages[i].cols);
+                picLabel->setFixedHeight(loadedImages[i].rows);
+
+            } else {
+                ImageOperations::fitImage(loadedImages[i+j], img, imgWidth, imgHeight);
+                picLabel->setFixedWidth(640);
+                picLabel->setFixedHeight(480);
+            }
 
             pix = cvMatToQPixmap(img);
 
             picLabel->setPixmap(pix);
-            picLabel->setFixedWidth(640);
-            picLabel->setFixedHeight(480);
+
             ui->imagesLayout->addWidget(picLabel,i,j);
             imageLabels << picLabel;
         }
@@ -417,8 +440,11 @@ void MainWindow::SIFT() {
 
       while(1){ //Create infinte loop for live streaming
 
+          Mat resized;
+          ImageOperations::fitImage(img_matches,resized,800,600);
+
           //-- Show detected matches
-          imshow( "Good Matches", img_matches );
+          imshow( "Good Matches", resized );
 
           key = cvWaitKey(10);     //Capture Keyboard stroke
           if (char(key) == 27){
@@ -438,6 +464,89 @@ void MainWindow::SIFT() {
         return;
     }
 }
+
+
+
+
+
+
+void MainWindow::templateMatching() {
+
+    if (loadedImages.size() == 2) {
+
+        int match_method = 4;
+
+        /// Load image and template
+        Mat templateToMatch = loadedImages[0].clone();
+        Mat imageForTemplateMatching = loadedImages[1].clone();
+
+
+
+        /// Create the result matrix
+        int result_cols =  imageForTemplateMatching.cols - templateToMatch.cols + 1;
+        int result_rows = imageForTemplateMatching.rows - templateToMatch.rows + 1;
+
+        Mat result;
+
+        try {
+            result.create( result_rows, result_cols, CV_32FC1 );
+        }
+        catch (cv::Exception e){
+            cout << "template too small!" << endl;
+            return;
+        }
+
+        /// Create windows
+        namedWindow( "image", CV_WINDOW_AUTOSIZE );
+        namedWindow( "result", CV_WINDOW_AUTOSIZE );
+
+        /// Source image to display
+        Mat img_display;
+        imageForTemplateMatching.copyTo( img_display );
+
+
+        /// Do the Matching and Normalize
+        matchTemplate( imageForTemplateMatching, templateToMatch, result, match_method );
+        normalize( result, result, 0, 1, NORM_MINMAX, -1, Mat() );
+
+        /// Localizing the best match with minMaxLoc
+        double minVal; double maxVal; Point minLoc; Point maxLoc;
+        Point matchLoc;
+
+        minMaxLoc( result, &minVal, &maxVal, &minLoc, &maxLoc, Mat() );
+
+        /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+        if( match_method  == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED )
+          { matchLoc = minLoc; }
+        else
+          { matchLoc = maxLoc; }
+
+        /// Show me what you got
+        rectangle( img_display, matchLoc, Point( matchLoc.x + templateToMatch.cols , matchLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0 );
+        rectangle( result, matchLoc, Point( matchLoc.x + templateToMatch.cols , matchLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0 );
+
+        imshow( "image", img_display );
+        imshow( "result", result );
+
+        waitKey(0);
+        return;
+
+
+
+    }
+    else {
+        QMessageBox msgBox;
+        msgBox.setText("Template matching is supported only for 2 images. First image is template, second is target. Thanks!");
+        msgBox.exec();
+        return;
+    }
+}
+
+
+
+
+
+
 
 
 void MainWindow::itemDblClicked(QModelIndex) {

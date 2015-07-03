@@ -32,6 +32,7 @@ public:
     void static maskCutOut(cv::Mat & image, std::string);
     void static setCutoutPath(std::string path);
     std::string static getCutoutPath();
+    void static processField(cv::Mat & image);
 
 
 };

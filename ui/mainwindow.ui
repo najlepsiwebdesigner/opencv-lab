@@ -80,17 +80,10 @@
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="2">
-      <widget class="QPushButton" name="locating">
+     <item row="0" column="3">
+      <widget class="QPushButton" name="loadPicture">
        <property name="text">
-        <string>Locating</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QPushButton" name="cutaAndPerspective">
-       <property name="text">
-        <string>Cut and Perspective</string>
+        <string>load </string>
        </property>
       </widget>
      </item>
@@ -101,17 +94,24 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QPushButton" name="loadPicture">
+     <item row="1" column="2">
+      <widget class="QPushButton" name="cutaAndPerspective">
        <property name="text">
-        <string>load </string>
+        <string>Cut and Perspective</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QPushButton" name="savePictures">
+     <item row="2" column="2">
+      <widget class="QPushButton" name="locating">
        <property name="text">
-        <string>save</string>
+        <string>Locating</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="SIFT">
+       <property name="text">
+        <string>SIFT</string>
        </property>
       </widget>
      </item>
@@ -119,20 +119,6 @@
       <widget class="QPushButton" name="showWebcam">
        <property name="text">
         <string>Webcam</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
-      <widget class="QPushButton" name="clearImages">
-       <property name="text">
-        <string>clear</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="5">
-      <widget class="QPushButton" name="reload">
-       <property name="text">
-        <string>reload</string>
        </property>
       </widget>
      </item>
@@ -149,21 +135,42 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QPushButton" name="SIFT">
-       <property name="text">
-        <string>SIFT</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="4">
+     <item row="2" column="3">
       <widget class="QPushButton" name="cutoutFront">
        <property name="text">
         <string>cuOutFront</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="5">
+     <item row="1" column="3">
+      <widget class="QPushButton" name="savePictures">
+       <property name="text">
+        <string>save</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QPushButton" name="clearImages">
+       <property name="text">
+        <string>clear</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="7">
+      <widget class="QPushButton" name="templateMatching">
+       <property name="text">
+        <string>TempMatch</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QPushButton" name="reload">
+       <property name="text">
+        <string>reload</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="4">
       <widget class="QPushButton" name="cutoutBack">
        <property name="text">
         <string>cutOutBack</string>

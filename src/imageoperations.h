@@ -30,12 +30,15 @@ public:
     void static dilation(Mat & image);
     void static biggestContour(Mat & image);
     void static convexH(Mat & image);
+    void static horizontalBlur(Mat & image);
 
     void static maskFront(Mat & image);
     void static maskBack(Mat & image);
     void static contours(Mat & image);
     vector<Rect> static getRectanglesFromMask(Mat & mask);
     void static maskOverlay(Mat & image, std::string maskFilename);
+
+    void static textLocalization(Mat & image);
 
 
     double static cross(Point v1,Point v2);

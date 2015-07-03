@@ -70,7 +70,7 @@ void Webcam::showKinectRGB() {
 
 
 void Webcam::showRGB() {
-    namedWindow("Camera_Output", 1);
+//    namedWindow("Camera_Output", 1);
     int cap = CV_CAP_ANY;
 //    if (cap == 0){
 //        cap = 1;

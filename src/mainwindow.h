@@ -77,6 +77,8 @@ public:
     string getWebcamScreenshotPath();
     string getCutoutPath();
 
+//    void MatchingMethod( int, void* );
+
 protected:
     void dragEnterEvent(QDragEnterEvent *e);
     void dropEvent(QDropEvent *e);
@@ -107,6 +109,8 @@ private slots:
     void closing();
     void cutOutFront();
     void cutOutBack();
+    void templateMatching();
+
 };
 
 
