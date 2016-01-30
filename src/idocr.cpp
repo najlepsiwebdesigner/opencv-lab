@@ -584,7 +584,7 @@ void idOCR::processField(Mat & image) {
             }
 
 
-            Mat mask = cvCreateMat(image.rows, image.cols, CV_8UC1);
+            Mat mask(image.rows, image.cols, CV_8UC1);
             mask.setTo(0);
 
             rectangle(mask, r, Scalar(255, 255, 255), -1);

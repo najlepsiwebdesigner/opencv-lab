@@ -739,12 +739,12 @@ void ImageOperations::resizedownup(Mat & image){
 }
 
 
-void ImageOperations::adaptiveBilateralFilter(Mat & image){
-    Mat dst;
-//    cv::bilateralFilter ( image, dst, 15, 100, 35 );
-    cv::adaptiveBilateralFilter(image, dst, Size(3,3),3);
-    image = dst;
-}
+//void ImageOperations::adaptiveBilateralFilter(Mat & image){
+//    Mat dst;
+////    cv::bilateralFilter ( image, dst, 15, 100, 35 );
+//    cv::adaptiveBilateralFilter(image, dst, Size(3,3),3);
+//    image = dst;
+//}
 
 void ImageOperations::kMeans(Mat & src) {
     cv::Mat samples(src.total(), 3, CV_32F);

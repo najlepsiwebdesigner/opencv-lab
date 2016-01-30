@@ -7,7 +7,7 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "imageoperations.h"
-#include "myfreenectdevice.h"
+//#include "myfreenectdevice.h"
 
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/gregorian/greg_month.hpp"

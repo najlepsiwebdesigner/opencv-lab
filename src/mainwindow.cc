@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     operationsMap.insert(FunctionMap::value_type("squares",ImageOperations::squares));
     operationsMap.insert(FunctionMap::value_type("HSV",ImageOperations::hsv));
     operationsMap.insert(FunctionMap::value_type("resizeDownUp",ImageOperations::resizedownup));
-    operationsMap.insert(FunctionMap::value_type("adaptive bilateral",ImageOperations::adaptiveBilateralFilter));
+//    operationsMap.insert(FunctionMap::value_type("adaptive bilateral",ImageOperations::adaptiveBilateralFilter));
     operationsMap.insert(FunctionMap::value_type("kMeans",ImageOperations::kMeans));
     operationsMap.insert(FunctionMap::value_type("Sobel",ImageOperations::sobel));
     operationsMap.insert(FunctionMap::value_type("Gaussian",ImageOperations::gaussian));
@@ -151,10 +151,10 @@ void MainWindow::showWebcam() {
 
 
 
-void MainWindow::showKinect() {
-    Webcam cam;
-    cam.showKinectRGB();
-}
+//void MainWindow::showKinect() {
+//    Webcam cam;
+//    cam.showKinectRGB();
+//}
 
 
 
@@ -367,103 +367,103 @@ QPixmap cvMatToQPixmap( const cv::Mat &inMat )
     return QPixmap::fromImage( cvMatToQImage( inMat ) );
 }
 
-void MainWindow::SIFT() {
+//void MainWindow::SIFT() {
 
-    if (loadedImages.size() == 2) {
+//    if (loadedImages.size() == 2) {
 
-    Mat img_1 = loadedImages[0];
-    Mat img_2 = loadedImages[1];
+//    Mat img_1 = loadedImages[0];
+//    Mat img_2 = loadedImages[1];
 
-//    imshow("1",image1);
-//    imshow("2",image2);
+////    imshow("1",image1);
+////    imshow("2",image2);
 
-    if( !img_1.data || !img_2.data )
-      { std::cout<< " --(!) Error reading images " << std::endl;return; }
+//    if( !img_1.data || !img_2.data )
+//      { std::cout<< " --(!) Error reading images " << std::endl;return; }
 
-      //-- Step 1: Detect the keypoints using SURF Detector
-      int minHessian = 400;
+//      //-- Step 1: Detect the keypoints using SURF Detector
+//      int minHessian = 400;
 
-      SurfFeatureDetector detector( minHessian );
+//      SurfFeatureDetector detector( minHessian );
 
-      std::vector<KeyPoint> keypoints_1, keypoints_2;
+//      std::vector<KeyPoint> keypoints_1, keypoints_2;
 
-      detector.detect( img_1, keypoints_1 );
-      detector.detect( img_2, keypoints_2 );
+//      detector.detect( img_1, keypoints_1 );
+//      detector.detect( img_2, keypoints_2 );
 
-      //-- Step 2: Calculate descriptors (feature vectors)
-      SurfDescriptorExtractor extractor;
+//      //-- Step 2: Calculate descriptors (feature vectors)
+//      SurfDescriptorExtractor extractor;
 
-      Mat descriptors_1, descriptors_2;
+//      Mat descriptors_1, descriptors_2;
 
-      extractor.compute( img_1, keypoints_1, descriptors_1 );
-      extractor.compute( img_2, keypoints_2, descriptors_2 );
+//      extractor.compute( img_1, keypoints_1, descriptors_1 );
+//      extractor.compute( img_2, keypoints_2, descriptors_2 );
 
-      //-- Step 3: Matching descriptor vectors using FLANN matcher
-      FlannBasedMatcher matcher;
-      std::vector< DMatch > matches;
-      matcher.match( descriptors_1, descriptors_2, matches );
+//      //-- Step 3: Matching descriptor vectors using FLANN matcher
+//      FlannBasedMatcher matcher;
+//      std::vector< DMatch > matches;
+//      matcher.match( descriptors_1, descriptors_2, matches );
 
-      double max_dist = 0; double min_dist = 100;
+//      double max_dist = 0; double min_dist = 100;
 
-      //-- Quick calculation of max and min distances between keypoints
-      for( int i = 0; i < descriptors_1.rows; i++ )
-      { double dist = matches[i].distance;
-        if( dist < min_dist ) min_dist = dist;
-        if( dist > max_dist ) max_dist = dist;
-      }
+//      //-- Quick calculation of max and min distances between keypoints
+//      for( int i = 0; i < descriptors_1.rows; i++ )
+//      { double dist = matches[i].distance;
+//        if( dist < min_dist ) min_dist = dist;
+//        if( dist > max_dist ) max_dist = dist;
+//      }
 
-      printf("-- Max dist : %f \n", max_dist );
-      printf("-- Min dist : %f \n", min_dist );
+//      printf("-- Max dist : %f \n", max_dist );
+//      printf("-- Min dist : %f \n", min_dist );
 
-      //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
-      //-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
-      //-- small)
-      //-- PS.- radiusMatch can also be used here.
-      std::vector< DMatch > good_matches;
+//      //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
+//      //-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
+//      //-- small)
+//      //-- PS.- radiusMatch can also be used here.
+//      std::vector< DMatch > good_matches;
 
-      for( int i = 0; i < descriptors_1.rows; i++ )
-      { if( matches[i].distance <= max(2*min_dist, 0.02) )
-        { good_matches.push_back( matches[i]); }
-      }
+//      for( int i = 0; i < descriptors_1.rows; i++ )
+//      { if( matches[i].distance <= max(2*min_dist, 0.02) )
+//        { good_matches.push_back( matches[i]); }
+//      }
 
-      //-- Draw only "good" matches
-      Mat img_matches;
-      drawMatches( img_1, keypoints_1, img_2, keypoints_2,
-                   good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-                   vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+//      //-- Draw only "good" matches
+//      Mat img_matches;
+//      drawMatches( img_1, keypoints_1, img_2, keypoints_2,
+//                   good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
+//                   vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
 
 
-      for( int i = 0; i < (int)good_matches.size(); i++ )
-      { printf( "-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx, good_matches[i].trainIdx ); }
+//      for( int i = 0; i < (int)good_matches.size(); i++ )
+//      { printf( "-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx, good_matches[i].trainIdx ); }
 
-      char key;
+//      char key;
 
-      while(1){ //Create infinte loop for live streaming
+//      while(1){ //Create infinte loop for live streaming
 
-          Mat resized;
-          ImageOperations::fitImage(img_matches,resized,800,600);
+//          Mat resized;
+//          ImageOperations::fitImage(img_matches,resized,800,600);
 
-          //-- Show detected matches
-          imshow( "Good Matches", resized );
+//          //-- Show detected matches
+//          imshow( "Good Matches", resized );
 
-          key = cvWaitKey(10);     //Capture Keyboard stroke
-          if (char(key) == 27){
-              break;      //If you hit ESC key loop will break.
-          }
-      }
+//          key = cvWaitKey(10);     //Capture Keyboard stroke
+//          if (char(key) == 27){
+//              break;      //If you hit ESC key loop will break.
+//          }
+//      }
 
-      destroyAllWindows();
+//      destroyAllWindows();
 
-      return;
+//      return;
 
-    }
-    else {
-        QMessageBox msgBox;
-        msgBox.setText("SIFT is supported only for 2 images at once!");
-        msgBox.exec();
-        return;
-    }
-}
+//    }
+//    else {
+//        QMessageBox msgBox;
+//        msgBox.setText("SIFT is supported only for 2 images at once!");
+//        msgBox.exec();
+//        return;
+//    }
+//}
 
 
 

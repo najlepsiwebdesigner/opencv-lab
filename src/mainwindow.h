@@ -19,8 +19,8 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
-#include "opencv2/features2d/features2d.hpp"
-#include "opencv2/nonfree/features2d.hpp"
+//#include "opencv2/features2d/features2d.hpp"
+//#include "opencv2/nonfree/features2d.hpp"
 
 // boost
 #include <boost/filesystem.hpp>
@@ -94,12 +94,12 @@ private:
 private slots:
     void openImage();
     void showWebcam();
-    void showKinect();
+//    void showKinect();
     void clearImages();
     void executeOperation();
     void reloadImages();
     void saveImages();
-    void SIFT();
+//    void SIFT();
     void itemDblClicked(QModelIndex);
     void filtering();
     void locating();

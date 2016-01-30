@@ -20,12 +20,10 @@ find_package(Qt5Widgets REQUIRED)
 find_package( OpenCV REQUIRED )
 find_package( Boost COMPONENTS system filesystem date_time REQUIRED)
 
-
 # libfreenect support
 include_directories("/usr/local/include/libfreenect")
 include_directories("/usr/local/include/libusb-1.0")
 include_directories( ${Boost_INCLUDE_DIRS} )
-
 
 # tesseract ocr
 include_directories("/usr/local/Cellar/tesseract/3.02.02_3/include")
@@ -37,8 +35,6 @@ set(SOURCE_FILES
     src/mainwindow.cc
     src/webcam.h
     src/webcam.cpp
-    src/myfreenectdevice.h
-    src/myfreenectdevice.cpp
     src/imageoperations.h
     src/imageoperations.cpp
     src/idOCR.h
@@ -74,7 +70,6 @@ add_executable(${PROJECT} MACOSX_BUNDLE
 
 target_link_libraries(${PROJECT} ${Boost_LIBRARIES})
 target_link_libraries(${PROJECT} ${OpenCV_LIBS})
-target_link_libraries(${PROJECT} "freenect")
 target_link_libraries(${PROJECT} "tesseract")
 
 

@@ -20,7 +20,7 @@ public:
     void static squares(Mat & image);
     void static hsv(Mat & src);
     void static resizedownup(Mat & image);
-    void static adaptiveBilateralFilter(Mat & image);
+//    void static adaptiveBilateralFilter(Mat & image);
     void static kMeans(Mat & src);
     void static sobel(Mat & src);
     void static gaussian(Mat & image);
